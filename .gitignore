@@ -1,0 +1,7 @@
+# 書き出し（TTS のキャッシュ、絵の部品、音声、動画、コマ）。どれも作り直せる
+/build/
+
+__pycache__/
+
+# API キー（Google の音声合成など。いまは BlackFairyTales の .env を読んでいる）
+/.env

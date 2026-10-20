@@ -1,0 +1,68 @@
+{
+  "_note": "combos はコンビ（male＝男性 2 人、female＝女性 2 人。女性に関わるネタは female、それ以外は male）。どちらも A がボケ、B がツッコミ。台本の頭の「combo: female」で選ぶ（書かなければ male）。styles は「」@スタイル で使う声の変え方。voice を書けば別の声、書かなければ話し手の声のまま speed・pitch・af（ffmpeg のフィルター）・gain_db で変える。prompt は Gemini-TTS 用の演技の指示",
+  "readings": { "_note": "漫才だけで使う読み替え（字幕は変わらない）。ふつうの読み間違いは、BlackFairyTales の tools/config.json の readings.ja（共通のリスト）に足す。「じゃーーん」（伸ばし棒 2 本だと Chirp が 8 秒も伸ばす）と「ワッーーツ」（書いたとおりだと 0.31 秒で切れる）も共通のリストに移した" },
+  "join_gap": 0.08,
+  "tsukkomi_note": "叩くツッコミ（台本の B!）は、コンビの tsukkomi の設定で、頭に prefix を別の音声として足し、その最初の head_sec 秒を head_db、セリフの最後の tail_sec 秒（語尾）を tail_db 大きくする。前のセリフの語尾に overlap 秒かぶせる",
+  "default_gap": 0.15,
+  "reply_overlap": 0.1,
+  "_reply_note": "ボケ（A）の次のツッコミ（B）の行は、台本で間を書いていなければ reply_overlap 秒だけ前の語尾にかぶせる。ボケの行はかぶせない（間を大事にする）",
+  "combos": {
+    "male": {
+      "A": { "voice": "ja-JP-Chirp3-HD-Iapetus", "speed": 1.0, "pitch": 1.0, "gain_db": 0.5, "gemini_voice": "Iapetus",
+             "prompt": "漫才のボケ。とぼけたことを淡々と、ゆっくりめに言う30代の男性。標準語で" },
+      "B": { "voice": "ja-JP-Chirp3-HD-Puck", "speed": 1.18, "pitch": 1.0, "gain_db": 2.5, "gemini_voice": "Puck",
+             "prompt": "漫才のツッコミ。ハキハキと歯切れよく、勢いのある30代の男性。標準語で、ツッコミは強く鋭く" },
+      "tsukkomi": { "prefix": "ワッーーツ！", "head_sec": 0.3, "head_db": 7, "tail_sec": 0.35, "tail_db": 7, "overlap": 0.15 }
+    },
+    "female": {
+      "A": { "voice": "ja-JP-Chirp3-HD-Gacrux", "speed": 1.0, "pitch": 1.0, "gain_db": 0.5, "gemini_voice": "Gacrux",
+             "prompt": "漫才のボケ。低めの落ち着いた声で、とぼけたことを淡々と、ゆっくりめに言う30代の女性。標準語で" },
+      "B": { "voice": "ja-JP-Chirp3-HD-Autonoe", "speed": 1.18, "pitch": 1.05, "gain_db": 2.5, "gemini_voice": "Autonoe",
+             "prompt": "漫才のツッコミ。高めの声で、ハキハキと歯切れよく勢いのある30代の女性。標準語で、ツッコミは強く鋭く" },
+      "tsukkomi": { "prefix": "えぐーー！", "head_sec": 0.3, "head_db": 4, "tail_sec": 0.35, "tail_db": 4, "overlap": 0.15 }
+    }
+  },
+  "voicevox": {
+    "_note": "VOICEVOX で作るとき（--backend voicevox）の声。character はキャラ名、style はスタイル名（null ならそのキャラの最初のスタイル）。pitch は 0 が元の高さ（±0.15 くらいまで）、intonation は抑揚（1 が元、小さいほど平坦）。配役は 2026-10-20 の聴き比べで決めた：男ボケ＝麒ヶ島宗麟、男ツッコミ＝白上虎太郎（ふつう）、女ボケ＝波音リツ、女ツッコミ＝あんこもん（つよつよ）。動画には「VOICEVOX:キャラ名」の表記が要る",
+    "readings": { "_note": "VOICEVOX だけで使う読み替え（共通のリストより優先）。ツッコミの頭は、伸ばし棒が多いと VOICEVOX が途中で区切る（ワーッ／ツ、え／ぐー）ので、区切らずに読む書き方にする",
+                  "ワッーーツ": "ワーツ", "えぐーー": "エグーー", "麻辣湯": "まーらーたん" },
+    "combos": {
+      "male": {
+        "A": { "character": "麒ヶ島宗麟", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "B": { "character": "白上虎太郎", "style": "ふつう", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 }
+      },
+      "female": {
+        "A": { "character": "波音リツ", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "B": { "character": "あんこもん", "style": "つよつよ", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 }
+      }
+    },
+    "styles": {
+      "shibui": { "character": "†聖騎士 紅桜†", "style": null, "speed": 0.9, "gain_db": -1, "af": "aecho=0.8:0.6:45:0.22" },
+      "robot": { "character": "Voidoll", "style": null, "gain_db": -1 },
+      "system": { "character": "Voidoll", "style": null, "gain_db": -2, "af": "highpass=f=350,lowpass=f=3400" },
+      "jii": { "character": "ちび式じい", "style": null },
+      "cute": { "speed": 1.05, "pitch": 0.06, "intonation": 1.4 },
+      "polite": { "speed": 1.12, "pitch": 0.02, "intonation": 0.6 },
+      "chappy": { "speed": 1.12, "pitch": 0.03, "intonation": 0.7 },
+      "whisper": { "speed": 0.9, "intonation": 0.8, "gain_db": -7, "af": "highpass=f=500" }
+    }
+  },
+  "styles": {
+    "shibui": { "speed": 0.82, "pitch": 0.9, "gain_db": -2, "af": "aecho=0.8:0.6:45:0.22",
+                "prompt": "映画のハッカーになりきって、低く渋い声で、ささやくように、もったいぶって" },
+    "cute":   { "speed": 1.05, "pitch": 1.15,
+                "prompt": "友だちに話しかけるように、軽く明るく" },
+    "robot":  { "voice": "ja-JP-Chirp3-HD-Kore", "speed": 0.95, "pitch": 1.0, "gain_db": -1,
+                "af": "afftfilt=real='hypot(re,im)*cos(0)':imag='hypot(re,im)*sin(0)':win_size=512:overlap=0.75,highpass=f=200",
+                "gemini_voice": "Kore", "prompt": "[robotic] 機械の自動音声のように、抑揚なく平坦に" },
+    "system": { "voice": "ja-JP-Chirp3-HD-Kore", "speed": 1.0, "pitch": 1.0, "gain_db": -2,
+                "af": "highpass=f=350,lowpass=f=3400",
+                "gemini_voice": "Kore", "prompt": "ウェブサイトの案内音声のように、丁寧に事務的に" },
+    "polite": { "speed": 1.12, "pitch": 1.04,
+                "prompt": "AIに打ち込む文を読み上げるように、丁寧だが棒読みで、早口に" },
+    "chappy": { "speed": 1.12, "pitch": 1.06,
+                "prompt": "AIアシスタントのように、明るく丁寧で、自信満々に、よどみなく" },
+    "whisper": { "speed": 0.9, "pitch": 1.0, "gain_db": -7, "af": "highpass=f=500",
+                 "prompt": "[whispering] 誰にも聞こえないように、こっそり小声で" }
+  }
+}
