@@ -40,7 +40,7 @@ def excerpt(script, n_lines, out):
         t = line.strip()
         if not t or t.startswith("#"):
             continue
-        (head if t.split(":")[0] in ("combo", "title", "theme") else body).append(t)
+        (head if t.split(":")[0] in ("combo", "title", "theme", "thumb", "short") else body).append(t)
     out.write_text("\n".join(head + body[:n_lines]) + "\n", encoding="utf-8")
 
 

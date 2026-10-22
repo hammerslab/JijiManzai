@@ -79,7 +79,7 @@ def parse(path):
         if raw.startswith("combo:"):
             combo = raw.split(":", 1)[1].strip()
             continue
-        if raw.startswith(("title:", "theme:")):  # 題名とお題（タイトル画面に出す）
+        if raw.startswith(("title:", "theme:", "thumb:", "short:")):  # 題名とお題（タイトル画面）、サムネイルの文句（／で 3 案、｜で改行）、ショートの区間（秒-秒）
             key, value = raw.split(":", 1)
             meta[key] = value.strip()
             continue
@@ -129,6 +129,8 @@ def bft_build():
     import importlib.util
     import sys
     if "bft_build" not in sys.modules:
+        if str(BFT / "tools") not in sys.path:   # build.py が同じフォルダのモジュール（runlock など）を読むため
+            sys.path.append(str(BFT / "tools"))
         spec = importlib.util.spec_from_file_location("bft_build", BFT / "tools" / "build.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -420,7 +422,8 @@ def main():
         rms = np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1))
         f0 = t // hop
         mouth[speaker][f0:f0 + n] = np.maximum(mouth[speaker][f0:f0 + n], rms)
-    events.update({"combo": combo, "title": meta.get("title", ""), "theme": meta.get("theme", ""), "fps": FPS, "duration": round(total / RATE, 3), "audio": wav.name,
+    events.update({"combo": combo, "title": meta.get("title", ""), "theme": meta.get("theme", ""),
+                   "thumb": [c.strip() for c in meta.get("thumb", "").split("／") if c.strip()], "short": meta.get("short", ""), "fps": FPS, "duration": round(total / RATE, 3), "audio": wav.name,
                    "mouth": {k: [round(float(v), 4) for v in arr] for k, arr in mouth.items()}})
     (out_dir / f"timeline_{args.backend}.json").write_text(json.dumps(events, ensure_ascii=False), encoding="utf-8")
     print("\n".join(timeline))

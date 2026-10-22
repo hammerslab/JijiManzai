@@ -38,7 +38,7 @@ def to_md(path):
             break
     out += ["", f"記号：〔間〕＝少し黙る、【叩く】【強く叩く】【思いきり叩く】＝手刀でツッコむ（効果音つき。頭の「{prefix}」は自動で付く）、〈〉＝そこだけ声を変える", "", "---", ""]
     raw = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines()]
-    body = [ln for ln in raw if ln and not ln.startswith("#") and not ln.startswith(("combo:", "title:", "theme:"))]
+    body = [ln for ln in raw if ln and not ln.startswith("#") and not ln.startswith(("combo:", "title:", "theme:", "thumb:", "short:"))]
     for ln in body:
         look = synth.LOOK_RE.match(ln)
         if look:

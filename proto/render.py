@@ -3,7 +3,8 @@
     タイトル（題名とお題）→ 2 人が袖から登場 → 漫才（3 分以内）→ 2 人が袖へ退場 → エンディング（名場面を流しながら、2 人の声でチャンネル登録を頼む）
 
 proto/synth.py が書き出したタイムライン（build/<台本>/timeline_chirp.json）と音声に、部品画像（art/gen_chars.py）を重ねる。
-エンディングの声は、コンビごとに決まった台本（proto/ending_male.txt / ending_female.txt）を synth.py で作っておく。
+エンディングの声は、その回の台本（scripts/<台本>_end.txt → build/<台本>_end/）があればそれ、なければコンビごとに決まった台本
+（proto/ending_male.txt / ending_female.txt → build/ending_<コンビ>/）を使う。どちらも synth.py で作っておく。
 
     python proto/render.py chappy                     # 丸ごと
     python proto/render.py chappy --from 0 --to 12    # 一部だけ（秒は動画の頭から。確かめる用）
@@ -296,8 +297,8 @@ class Scene:
             self.paste(frame, self.S[name], x, 0, hop, rot)
         frame.alpha_composite(self.curtain)   # 袖の幕の後ろから出入りする
 
-    def main_frame(self, t, frame_no):
-        """漫才の部分の 1 コマ（t は漫才の頭からの秒）。"""
+    def main_frame(self, t, frame_no, bubbles=True):
+        """漫才の部分の 1 コマ（t は漫才の頭からの秒）。bubbles=False で吹き出しなし（サムネイル・ショート用）。"""
         c, tl, S = self.c, self.tl, self.S
         k = max(0, min(int(t * self.fps), len(self.mouth["A"]) - 1))
         near = min(range(len(tl["hits"])), key=lambda i: abs(t - tl["hits"][i]), default=None)   # いちばん近い叩くツッコミ
@@ -352,7 +353,8 @@ class Scene:
             frame.alpha_composite(fx, (int(hx - fx.width / 2), int(hy - fx.height / 2)))
 
         # 吹き出し
-        self.bubbles.draw(frame, t, xb, xt, shake)
+        if bubbles:
+            self.bubbles.draw(frame, t, xb, xt, shake)
         return frame
 
 
@@ -362,7 +364,11 @@ class Format:
     def __init__(self, scene):
         self.sc = scene
         tl = scene.tl
-        end_file = ROOT / "build" / f"ending_{scene.combo}" / f"timeline_{scene.backend}.json"
+        # その回のエンディング（ボケのひとことを回ごとに変える）があればそれ、なければコンビ共通のもの
+        self.end_dir = scene.base.parent / f"{scene.base.name}_end"
+        if not (self.end_dir / f"timeline_{scene.backend}.json").exists():
+            self.end_dir = ROOT / "build" / f"ending_{scene.combo}"
+        end_file = self.end_dir / f"timeline_{scene.backend}.json"
         if not end_file.exists():
             raise SystemExit(f"エンディングの声がない。python proto/synth.py proto/ending_{scene.combo}.txt --backend {scene.backend} で作る")
         self.end_tl = json.loads(end_file.read_text(encoding="utf-8"))
@@ -493,7 +499,7 @@ def build_audio(fmt, rate):
     out = deb[:int((T_OUT + 0.6) * rate)].copy()
     out *= np.minimum(1, (len(out) - np.arange(len(out))) / (0.6 * rate))
     put(out, fmt.t_out, 0.5)
-    end_voice, er = read_wav(ROOT / "build" / f"ending_{sc.combo}" / fmt.end_tl["audio"])
+    end_voice, er = read_wav(fmt.end_dir / fmt.end_tl["audio"])
     put(resample(end_voice, er, rate), fmt.t_end + 0.5)
     loop_len = fmt.total - fmt.t_end
     loop = np.tile(deb, int(loop_len * rate / len(deb)) + 2)[:int(loop_len * rate)]
@@ -555,9 +561,10 @@ def main():
     mp4 = out_dir / f"{stem}.mp4"
     enc = subprocess.Popen([synth.ffmpeg(), "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{W}x{H}", "-r", str(fps), "-i", "-", "-i", str(wav),
-                            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18",
+                            "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", "18", "-g", str(fps // 2), "-bf", "2",
                             "-af", "alimiter=limit=0.89:level=disabled",   # 声・効果音・拍手が重なっても割れないよう -1dB で抑える
-                            "-c:a", "aac", "-b:a", "192k", str(mp4)], stdin=subprocess.PIPE)
+                            "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",   # YouTube の推奨：AAC・48kHz・ステレオ
+                            "-movflags", "+faststart", str(mp4)], stdin=subprocess.PIPE)
     for f in range(int((t_to - t_from) * fps)):
         t = t_from + f / fps
         enc.stdin.write(draw(t, f).convert("RGB").tobytes())
