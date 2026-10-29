@@ -30,7 +30,7 @@ BFT = Path("Z:/git/BlackFairyTales")  # 先に作った童話の動画。読み�
 ENV_FILES = [ROOT / ".env", BFT / ".env"]
 GEMINI_MODEL = "gemini-2.5-pro-tts"
 
-LINE_RE = re.compile(r"^(AB|A|B)(!{1,3})?(?:\(([-+]?\d+(?:\.\d+)?)\))?:\s*(.+)$")
+LINE_RE = re.compile(r"^(ALL|AB|A|B|C|D)(!{1,3})?(?:\(([-+]?\d+(?:\.\d+)?)\))?:\s*(.+)$")
 LOOK_RE = re.compile(r"^\(見つめ合う\s+(\d+(?:\.\d+)?)\)$")
 QUOTE_RE = re.compile(r"「([^」]*)」@(\w+)\s*")
 RUBY_RE = re.compile(r"\{([^|}]*)\|([^}]*)\}")
@@ -82,6 +82,9 @@ def parse(path):
         if raw.startswith(("title:", "theme:", "thumb:", "short:")):  # 題名とお題（タイトル画面）、サムネイルの文句（／で 3 案、｜で改行）、ショートの区間（秒-秒）
             key, value = raw.split(":", 1)
             meta[key] = value.strip()
+            continue
+        if raw.startswith("topic:"):  # ラジオ：ここから次の話題（画面に見出しを出す）
+            lines.append(("TOPIC", None, [], raw.split(":", 1)[1].strip(), False))
             continue
         look = LOOK_RE.match(raw)
         if look:
@@ -335,19 +338,27 @@ def main():
     seg_dir.mkdir(parents=True, exist_ok=True)
 
     placed, timeline = [], []  # placed: (開始サンプル, pcm, 話し手)
-    events = {"lines": [], "hits": [], "hit_levels": [], "looks": []}  # 動画用（秒）。hit_levels は hits と同じ順の叩く強さ（1〜3）
+    events = {"lines": [], "hits": [], "hit_levels": [], "looks": [], "topics": []}  # 動画用（秒）。hit_levels は hits と同じ順の叩く強さ（1〜3）。topics はラジオの話題の見出し
     look_from = None  # 見つめ合いが始まった時刻。次のセリフが終わるまで続ける
+    topic = None      # ラジオ：次のセリフから始まる話題の見出し
     prev_start, prev_end = 0, int(0.5 * RATE)
     combo, lines, meta = parse(args.script)
-    if combo not in cfg["combos"]:
+    combos = cfg["voicevox"]["combos"] if args.backend == "voicevox" else cfg["combos"]
+    if combo not in combos:
         raise SystemExit(f"voices.json の combos に '{combo}' がない")
     print(f"コンビ: {combo}")
-    tk = cfg["combos"][combo]["tsukkomi"]
+    speakers = [k for k in combos[combo] if len(k) == 1]   # 話し手（漫才は A・B、ラジオは A〜D）
+    tk = cfg["combos"].get(combo, {}).get("tsukkomi")      # ラジオには叩くツッコミがない
     for i, (who, gap, segs, shown, hit) in enumerate(lines):
         if who == "LOOK":  # 黙って見つめ合う。間だけ空けて、次のセリフまで相手を見る
             look_from = prev_end
             prev_start, prev_end = prev_end, prev_end + int(gap * RATE)
             continue
+        if who == "TOPIC":  # 話題の変わり目は少し長めに間をあける
+            topic = shown
+            continue
+        if gap is None and topic is not None:
+            gap = 1.2
         if gap is None and look_from is not None:
             gap = 0.0
         if gap is None:  # ボケに返すツッコミは語尾にかぶせる。それ以外は少し間をあける
@@ -359,7 +370,7 @@ def main():
         start = max(prev_start + int(0.3 * RATE), prev_end + int(gap * RATE))
         line_segs = []  # 吹き出し用：区切りごとの時刻と表示の字
         end = start
-        for speaker in (["A", "B"] if who == "AB" else [who]):
+        for speaker in (["A", "B"] if who == "AB" else speakers if who == "ALL" else [who]):
             t = start
             for j, (text, style, disp) in enumerate(segs):
                 s = settings(cfg, combo, speaker, style, args.backend)
@@ -374,8 +385,8 @@ def main():
                 spoken_chars = len(TAG_RE.sub("", text))
                 if len(pcm) / RATE > 2.0 and len(pcm) / RATE > 0.3 * spoken_chars:  # Chirp がまれに語尾を何秒も伸ばす
                     print(f"  ！ 長すぎる声 {seg.name}: {len(pcm) / RATE:.1f} 秒 / {spoken_chars} 文字「{text[:20]}」")
-                if who == "AB":  # 2 人の声を重ねると割れるので、1 人ずつ 4dB 下げる
-                    pcm = array.array("h", (int(v * 0.63) for v in pcm))
+                if who in ("AB", "ALL"):  # 声を重ねると割れるので、1 人ずつ下げる（2 人は 4dB、4 人は 8dB）
+                    pcm = array.array("h", (int(v * (0.63 if who == "AB" else 0.4)) for v in pcm))
                 placed.append((t, pcm, speaker))
                 line_segs.append({"who": speaker, "start": round(t / RATE, 3), "end": round((t + len(pcm)) / RATE, 3),
                                   "text": disp, "style": style})
@@ -385,6 +396,9 @@ def main():
         prev_start, prev_end = start, end
         events["lines"].append({"who": who, "start": round(start / RATE, 3), "end": round(end / RATE, 3), "hit": hit, "text": shown,
                                 "segs": line_segs})
+        if topic is not None:
+            events["topics"].append({"start": round(start / RATE, 3), "text": topic})
+            topic = None
         if hit:
             events["hits"].append(round(start / RATE, 3))
             events["hit_levels"].append(hit)
@@ -415,7 +429,7 @@ def main():
     # 口パク用：話し手ごとに、1 コマ（1/30 秒）ずつの声の大きさ（RMS、0〜1）
     import numpy as np
     hop = RATE // FPS
-    mouth = {"A": np.zeros(total // hop + 1), "B": np.zeros(total // hop + 1)}
+    mouth = {k: np.zeros(total // hop + 1) for k in speakers}
     for t, pcm, speaker in placed:
         x = np.frombuffer(pcm.tobytes(), dtype="<i2").astype(np.float64) / 32768
         n = len(x) // hop

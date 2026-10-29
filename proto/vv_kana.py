@@ -27,10 +27,10 @@ def main():
         combo, lines, _ = synth.parse(src)
         rows = []
         for who, _, segs, shown, _ in lines:
-            if who == "LOOK":
+            if who in ("LOOK", "TOPIC"):
                 continue
             for text, style, _ in segs:
-                s = synth.vv_settings(cfg, combo, "A" if who == "AB" else who, style)
+                s = synth.vv_settings(cfg, combo, "A" if who in ("AB", "ALL") else who, style)
                 spoken = synth.reading(text, cfg, "voicevox").replace("[pause short]", "、").replace("[pause long]", "、、、").replace("[pause]", "、、")
                 sid = synth.vv_style_id(s["character"], s["style"])
                 q = json.loads(synth.vv_request(f"/audio_query?text={urllib.parse.quote(spoken)}&speaker={sid}"))

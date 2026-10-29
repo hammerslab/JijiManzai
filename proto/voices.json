@@ -34,6 +34,13 @@
       "female": {
         "A": { "character": "波音リツ", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
         "B": { "character": "あんこもん", "style": "つよつよ", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 }
+      },
+      "radio": {
+        "_note": "ほのぼの週刊ラジオ（docs/RADIO.md）。A＝男ボケ（アフロ）、B＝男ツッコミ（モヒカン・たとえ係）、C＝女ボケ（ボブ）、D＝女ツッコミ（金髪ギャル・読み手）。漫才より少しゆっくり、ツッコミの音量も控えめ",
+        "A": { "character": "麒ヶ島宗麟", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "B": { "character": "白上虎太郎", "style": "ふつう", "speed": 1.1, "pitch": -0.06, "intonation": 1.4, "gain_db": 1.5 },
+        "C": { "character": "波音リツ", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "D": { "character": "あんこもん", "style": "つよつよ", "speed": 1.1, "pitch": -0.06, "intonation": 1.4, "gain_db": 1.5 }
       }
     },
     "styles": {
@@ -41,6 +48,7 @@
       "robot": { "character": "Voidoll", "style": null, "gain_db": -1 },
       "system": { "character": "Voidoll", "style": null, "gain_db": -2, "af": "highpass=f=350,lowpass=f=3400" },
       "jii": { "character": "ちび式じい", "style": null },
+      "news": { "character": "あんこもん", "style": "ノーマル", "speed": 1.08, "pitch": -0.03, "intonation": 1.0, "gain_db": 1.0 },
       "cute": { "speed": 1.05, "pitch": 0.06, "intonation": 1.4 },
       "polite": { "speed": 1.12, "pitch": 0.02, "intonation": 0.6 },
       "chappy": { "speed": 1.12, "pitch": 0.03, "intonation": 0.7 },
