@@ -118,23 +118,51 @@ def shout_mouth(cx, cy, wdt, hgt, inside="#7a2230", lip=None):
 
 # ---------- キャラクター ----------
 
-def male_boke(mouth="closed", pose="stand", look=False, santa=False):
+def montsuki(w_top, y_top, y_v, crest_y, crest_dx, himo_y):
+    """紋付の胸元：白い半衿の V、家紋（白い丸）、白い羽織紐。"""
+    out = line(f"M {-w_top} {y_top} L 0 {y_v}", 9, "#ffffff") + line(f"M {w_top} {y_top} L 0 {y_v}", 9, "#ffffff")
+    for s in (-1, 1):
+        out += circle(s * crest_dx, crest_y, 10, "#ffffff", 3) + circle(s * crest_dx, crest_y, 4, "#2b2a33", 0)
+    out += circle(-8, himo_y, 9, "#ffffff", 3) + circle(8, himo_y, 9, "#ffffff", 3) + line(f"M 0 {himo_y + 6} L 0 {himo_y + 30}", 5, "#ffffff")
+    return out
+
+
+def hakama(x_top, y_top, x_bot, color="#6b6f7a"):
+    """袴（縦じま。真ん中で二つに分かれる）。"""
+    out = path(f"M {-x_top} {y_top} L {x_top} {y_top} L {x_bot} -14 L 8 -14 L 0 {y_top + 150} L -8 -14 L {-x_bot} -14 Z", color)
+    for i in range(1, 4):
+        x = x_top * i / 4
+        out += line(f"M {x} {y_top + 6} L {x_bot * i / 4 + 6} -20", 3, "#555864") + line(f"M {-x} {y_top + 6} L {-x_bot * i / 4 - 6} -20", 3, "#555864")
+    return out
+
+
+def male_boke(mouth="closed", pose="stand", look=False, costume=None):
     """痩せたアフロ（ボケ）。ひょろ長い体、細いスーツ、眠そうな目。
     pose="hit"（ツッコまれた）は、腰から上が「く」の字に折れ曲がり、腕が泳ぐ。叩く強さで折れる角度を変える：
     hit1＝25°（ふつう）、hit＝42°（強い）、hit3＝60°（いちばん強い）。
-    santa=True はクリスマスの回の衣装（赤いスーツに白いすそ、緑のネクタイ、アフロの上にサンタの帽子）。"""
+    costume="santa" はクリスマスの回の衣装（赤いスーツに白いすそ、緑のネクタイ、アフロの上にサンタの帽子）、
+    "wafuku" はお正月の回の衣装（黒の紋付の羽織にしま模様の袴、白い足袋に草履）。"""
+    santa, wafuku = costume == "santa", costume == "wafuku"
     bend = {"hit1": 25, "hit": 42, "hit3": 60}.get(pose)
     pose = "hit" if bend else pose
-    suit, suit_d = (SANTA_RED, SANTA_RED_D) if santa else ("#4f9d8f", "#3d8174")
-    low = [ellipse(-26, -8, 30, 12, "#5a3a2a"), ellipse(26, -8, 30, 12, "#5a3a2a")]
-    low.append(rrect(-44, -335, 32, 325, 12, suit_d))
-    low.append(rrect(12, -335, 32, 325, 12, suit_d))
+    suit, suit_d = (SANTA_RED, SANTA_RED_D) if santa else ("#2b2a33", "#2b2a33") if wafuku else ("#4f9d8f", "#3d8174")
+    if wafuku:   # 草履と足袋、袴
+        low = [ellipse(-26, -8, 30, 10, "#c8a46a"), ellipse(26, -8, 30, 10, "#c8a46a"), ellipse(-24, -18, 20, 12, "#f4f1ea", 3), ellipse(24, -18, 20, 12, "#f4f1ea", 3)]
+        low.append(hakama(56, -330, 70))
+    else:
+        low = [ellipse(-26, -8, 30, 12, "#5a3a2a"), ellipse(26, -8, 30, 12, "#5a3a2a")]
+        low.append(rrect(-44, -335, 32, 325, 12, suit_d))
+        low.append(rrect(12, -335, 32, 325, 12, suit_d))
     g = []
     g.append(path("M -40 -572 Q -68 -568 -66 -540 L -56 -318 Q 0 -306 56 -318 L 66 -540 Q 68 -568 40 -572 Z", suit))
-    g.append(path("M -22 -572 L 22 -572 L 0 -498 Z", "#ffffff", 4))
-    g.append(path("M -6 -562 L 6 -562 L 9 -430 L 0 -416 L -9 -430 Z", "#2f8f4e" if santa else "#9b2335", 3))
-    g.append(line("M -26 -572 L -4 -470", 4) + line("M 26 -572 L 4 -470", 4))
-    g.append(circle(0, -392, 5, "#7a1820" if santa else "#2f6b60", 3))
+    if wafuku:
+        g.append(path("M -22 -572 L 22 -572 L 0 -498 Z", "#8a8f99", 4))
+        g.append(montsuki(24, -572, -500, -530, 40, -470))
+    else:
+        g.append(path("M -22 -572 L 22 -572 L 0 -498 Z", "#ffffff", 4))
+        g.append(path("M -6 -562 L 6 -562 L 9 -430 L 0 -416 L -9 -430 Z", "#2f8f4e" if santa else "#9b2335", 3))
+        g.append(line("M -26 -572 L -4 -470", 4) + line("M 26 -572 L 4 -470", 4))
+        g.append(circle(0, -392, 5, "#7a1820" if santa else "#2f6b60", 3))
     if santa:
         g.append(fur_band(-60, 60, -318, 24))
     if pose == "hit":
@@ -170,30 +198,41 @@ def male_boke(mouth="closed", pose="stand", look=False, santa=False):
     return "".join(low) + upper
 
 
-def male_tsukkomi(mouth="open", pose="tsukkomi", look=False, santa=False):
+def male_tsukkomi(mouth="open", pose="tsukkomi", look=False, costume=None):
     """太ったモヒカン（ツッコミ）。丸い体、紺のスーツに赤い蝶ネクタイ、ぱっちりした目。
-    santa=True は赤い服に黒いベルト、緑の蝶ネクタイ、サンタの帽子（モヒカンが突き抜ける）。"""
-    suit, suit_d = (SANTA_RED, SANTA_RED_D) if santa else ("#3b4f86", "#2f3e66")
+    costume="santa" は赤い服に黒いベルト、緑の蝶ネクタイ、サンタの帽子（モヒカンが突き抜ける）、
+    "wafuku" は深緑の紋付の羽織にしま模様の袴、白い足袋に草履。"""
+    santa, wafuku = costume == "santa", costume == "wafuku"
+    suit, suit_d = (SANTA_RED, SANTA_RED_D) if santa else ("#2f5e4a", "#2f5e4a") if wafuku else ("#3b4f86", "#2f3e66")
     tie = "#2f8f4e" if santa else "#d6283c"
-    g = [ellipse(-46, -10, 42, 15, "#26262c"), ellipse(46, -10, 42, 15, "#26262c")]
-    g.append(rrect(-84, -240, 66, 228, 22, suit_d))
-    g.append(rrect(18, -240, 66, 228, 22, suit_d))
+    if wafuku:
+        g = [ellipse(-46, -8, 42, 11, "#c8a46a"), ellipse(46, -8, 42, 11, "#c8a46a"), ellipse(-44, -20, 30, 13, "#f4f1ea", 3), ellipse(44, -20, 30, 13, "#f4f1ea", 3)]
+        g.append(hakama(108, -260, 128))
+    else:
+        g = [ellipse(-46, -10, 42, 15, "#26262c"), ellipse(46, -10, 42, 15, "#26262c")]
+        g.append(rrect(-84, -240, 66, 228, 22, suit_d))
+        g.append(rrect(18, -240, 66, 228, 22, suit_d))
     if pose == "tsukkomi":
         far = limb([(130, -480), (182, -405), (136, -352)], 50, suit) + circle(130, -350, 24, SKIN)
     else:
         far = limb([(132, -480), (165, -380), (156, -292)], 50, suit) + circle(156, -282, 25, SKIN)
     g.append(far)
     g.append(ellipse(0, -385, 150, 172, suit))
-    g.append(path("M -48 -548 L 48 -548 L 0 -392 Z", "#ffffff", 4))
-    g.append(line("M -52 -548 L -6 -400", 4) + line("M 52 -548 L 6 -400", 4))
+    if wafuku:
+        g.append(path("M -48 -548 L 48 -548 L 0 -430 Z", "#8a8f99", 4))
+        g.append(montsuki(50, -548, -430, -490, 92, -400))
+    else:
+        g.append(path("M -48 -548 L 48 -548 L 0 -392 Z", "#ffffff", 4))
+        g.append(line("M -52 -548 L -6 -400", 4) + line("M 52 -548 L 6 -400", 4))
     if santa:   # サンタの黒いベルトと金のバックル、すその白いふわふわ
         g.append(rrect(-142, -350, 284, 38, 8, "#26262c", 4))
         g.append(rrect(-26, -356, 52, 50, 8, "#e3b341", 4) + rrect(-12, -342, 24, 22, 4, "#26262c", 3))
         g.append(fur_band(-118, 118, -222, 26))
-    else:
+    elif not wafuku:
         g.append(circle(0, -360, 6, "#26314f", 3) + circle(0, -300, 6, "#26314f", 3))
-    g.append(path("M 0 -532 L -30 -548 L -30 -514 Z", tie, 4) + path("M 0 -532 L 30 -548 L 30 -514 Z", tie, 4)
-             + circle(0, -532, 8, tie, 4))
+    if not wafuku:
+        g.append(path("M 0 -532 L -30 -548 L -30 -514 Z", tie, 4) + path("M 0 -532 L 30 -548 L 30 -514 Z", tie, 4)
+                 + circle(0, -532, 8, tie, 4))
     if pose == "tsukkomi":
         g.append(limb([(-128, -488), (-222, -452), (-300, -468)], 50, suit))
         g.append(chop_hand(-320, -468, SKIN))
@@ -222,21 +261,44 @@ def male_tsukkomi(mouth="open", pose="tsukkomi", look=False, santa=False):
     return "".join(g)
 
 
-def female_boke(mouth="closed", pose="stand", look=False, santa=False):
+def flowers(pts, r, fill, center="#e3b341"):
+    """着物の柄・髪飾りの花（5 枚の花びら）。"""
+    out = ""
+    for x, y in pts:
+        for a in range(0, 360, 72):
+            out += f'<circle cx="{x + r * 0.6 * math.cos(math.radians(a - 90)):.1f}" cy="{y + r * 0.6 * math.sin(math.radians(a - 90)):.1f}" r="{r * 0.5:.1f}" fill="{fill}"/>'
+        out += f'<circle cx="{x}" cy="{y}" r="{r * 0.28:.1f}" fill="{center}"/>'
+    return out
+
+
+def female_boke(mouth="closed", pose="stand", look=False, costume=None):
     """小さく痩せたボブ（ボケ）。ぱっつん前髪、淡い水色のワンピース、眠そうな目。
     pose="hit"（ツッコまれた）は、両手を上げ、脚を開いて飛ばされる形。傾きと移動は動画の側で付ける（叩く強さで変える）。
-    santa=True は赤いワンピースに白いすそ、サンタの帽子。"""
+    costume="santa" は赤いワンピースに白いすそ、サンタの帽子。"wafuku" は朱色の振袖（梅の柄、金の帯、長い袖）に花の髪飾り。"""
+    santa, wafuku = costume == "santa", costume == "wafuku"
     pose = "hit" if pose.startswith("hit") else pose
-    dress = SANTA_RED if santa else "#9fb7e0"
+    dress = SANTA_RED if santa else "#d8454a" if wafuku else "#9fb7e0"
     hair = "#2a2633"
+    leg = "#f4f1ea" if wafuku else "#4a4458"   # 振袖のときは白い足袋
     if pose == "hit":
-        g = [limb([(-14, -196), (-40, -20)], 16, "#4a4458"), limb([(14, -196), (44, -30)], 16, "#4a4458"),
+        g = [limb([(-14, -196), (-40, -20)], 16, leg), limb([(14, -196), (44, -30)], 16, leg),
              ellipse(-44, -14, 19, 10, "#c0392b"), ellipse(50, -24, 19, 10, "#c0392b")]
     else:
         g = [ellipse(-17, -8, 19, 10, "#c0392b"), ellipse(17, -8, 19, 10, "#c0392b")]
-        g.append(rrect(-25, -200, 16, 192, 8, "#4a4458"))
-        g.append(rrect(9, -200, 16, 192, 8, "#4a4458"))
-    g.append(path("M -32 -392 Q -46 -388 -46 -362 L -64 -192 Q 0 -178 64 -192 L 46 -362 Q 46 -388 32 -392 Z", dress))
+        g.append(rrect(-25, -200, 16, 192, 8, leg))
+        g.append(rrect(9, -200, 16, 192, 8, leg))
+    if wafuku:   # 振袖は足首まで（飛ばされたときは膝まで）。長い袖を先に描く
+        if pose != "hit":
+            for s in (-1, 1):
+                g.append(path(f"M {s * 46} -372 L {s * 84} -330 L {s * 86} -196 Q {s * 70} -180 {s * 54} -196 L {s * 50} -300 Z", dress))
+                g.append(flowers([(s * 70, -240)], 12, "#ffd6e0"))
+        hem = -150 if pose == "hit" else -26
+        g.append(path(f"M -32 -392 Q -46 -388 -46 -362 L -60 {hem} Q 0 {hem + 10} 60 {hem} L 46 -362 Q 46 -388 32 -392 Z", dress))
+        g.append(line(f"M -8 -380 L 10 {hem + 4}", 3, "#a8222c"))   # おくみの線
+        g.append(flowers([(-26, -250), (24, -170), (-20, -90), (30, -60)][:4 if pose != "hit" else 2], 14, "#ffd6e0"))
+        g.append(rrect(-48, -336, 96, 42, 6, "#e3b341") + line("M -46 -315 L 46 -315", 4, "#d8343f"))   # 金の帯と帯締め
+    else:
+        g.append(path("M -32 -392 Q -46 -388 -46 -362 L -64 -192 Q 0 -178 64 -192 L 46 -362 Q 46 -388 32 -392 Z", dress))
     if santa:
         g.append(fur_band(-70, 70, -188, 22))
     for s in (-1, 1):
@@ -253,6 +315,8 @@ def female_boke(mouth="closed", pose="stand", look=False, santa=False):
     g.append(path("M -58 -420 Q -66 -528 0 -530 Q 66 -528 58 -420 L 48 -420 L 46 -472 L -46 -472 L -48 -420 Z", hair))
     if santa:
         g.append(santa_hat(0, -512, 66, 120, -10))
+    if wafuku:   # 花の髪飾り
+        g.append(flowers([(46, -500)], 26, "#ff8fab") + flowers([(30, -522)], 16, "#ffffff"))
     g.append(sleepy_eyes(0, -446, 17, 0.9, look=5 if look else 0))
     g.append(f'<ellipse cx="-31" cy="-428" rx="9" ry="5" fill="{CHEEK}" opacity="0.45"/>'
              f'<ellipse cx="31" cy="-428" rx="9" ry="5" fill="{CHEEK}" opacity="0.45"/>')
@@ -263,37 +327,50 @@ def female_boke(mouth="closed", pose="stand", look=False, santa=False):
     return "".join(g)
 
 
-def female_tsukkomi(mouth="open", pose="tsukkomi", look=False, santa=False):
+def female_tsukkomi(mouth="open", pose="tsukkomi", look=False, costume=None):
     """小太りの金髪ギャル（ツッコミ）。ピンクのオフショル、デニムのミニ、白の厚底、金のフープピアス。
-    santa=True は赤いオフショルとミニに白いふち、サンタの帽子（ハートの髪留めは帽子の上に）。"""
+    costume="santa" は赤いオフショルとミニに白いふち、サンタの帽子（ハートの髪留めは帽子の上に）。
+    "wafuku" はギャルの振袖（紫に金の花、金の帯、白いふわふわのショール、大きな花の髪飾り。足元は白の厚底のまま）。"""
+    santa, wafuku = costume == "santa", costume == "wafuku"
     skin = SKIN_TAN
-    top = SANTA_RED if santa else "#ff7eb6"
+    top = SANTA_RED if santa else "#7b3fa0" if wafuku else "#ff7eb6"
+    arm = top if wafuku else skin   # 振袖は腕も袖の中
     blonde, blonde_d = "#f5d36b", "#e0b545"
     g = [rrect(-72, -64, 58, 62, 16, "#ffffff"), rrect(14, -64, 58, 62, 16, "#ffffff")]
     g.append(f'<rect x="-72" y="-18" width="58" height="16" rx="6" fill="#c9c9d6"/><rect x="14" y="-18" width="58" height="16" rx="6" fill="#c9c9d6"/>')
     g.append(rrect(-68, -228, 48, 170, 20, skin))
     g.append(rrect(20, -228, 48, 170, 20, skin))
     if pose == "tsukkomi":
-        g.append(limb([(108, -445), (158, -372), (114, -318)], 42, skin))
+        g.append(limb([(108, -445), (158, -372), (114, -318)], 42, arm))
     else:
-        g.append(limb([(108, -448), (140, -370), (134, -292)], 42, skin) + circle(134, -282, 20, skin))
+        if wafuku:   # 長い袖
+            g.append(path("M 110 -440 L 170 -380 L 172 -230 Q 150 -214 128 -230 L 124 -330 Z", top) + flowers([(150, -270)], 16, "#e3b341", "#ffffff"))
+        g.append(limb([(108, -448), (140, -370), (134, -292)], 42, arm) + circle(134, -282, 20, skin))
     g.append(ellipse(0, -458, 90, 28, skin))
-    g.append(path("M -106 -452 Q -150 -370 -118 -300 L 118 -300 Q 150 -370 106 -452 Q 0 -432 -106 -452 Z", top))
+    if wafuku:   # 足首までの振袖、金の帯、白いショール
+        g.append(path("M -106 -452 Q -150 -370 -118 -300 L -126 -66 Q 0 -54 126 -66 L 118 -300 Q 150 -370 106 -452 Q 0 -432 -106 -452 Z", top))
+        g.append(flowers([(-70, -240), (60, -180), (-40, -110), (84, -100), (10, -300)], 18, "#e3b341", "#ffffff"))
+        g.append(rrect(-124, -350, 248, 56, 8, "#e3b341") + line("M -122 -322 L 122 -322", 5, "#d8343f"))
+        g.append(line("M -112 -452 Q 0 -420 112 -452", 52, OL) + line("M -112 -452 Q 0 -420 112 -452", 42, FUR))
+    else:
+        g.append(path("M -106 -452 Q -150 -370 -118 -300 L 118 -300 Q 150 -370 106 -452 Q 0 -432 -106 -452 Z", top))
     if santa:   # 胸元とすそに白いふわふわ
         g.append(line("M -104 -446 Q 0 -426 104 -446", 30, OL) + line("M -104 -446 Q 0 -426 104 -446", 20, FUR))
         g.append(path("M -118 -306 L 118 -306 L 136 -206 Q 0 -188 -136 -206 Z", SANTA_RED_D))
         g.append(line("M -134 -204 Q 0 -186 134 -204", 30, OL) + line("M -134 -204 Q 0 -186 134 -204", 20, FUR))
-    else:
+    elif not wafuku:
         g.append(line("M -100 -440 Q 0 -420 100 -440", 3, "#ffb3d4"))
         g.append(line("M -60 -330 Q 0 -312 60 -330", 3, "#e2609c"))
         g.append(path("M -118 -306 L 118 -306 L 136 -206 Q 0 -188 -136 -206 Z", "#6f8fc4"))
         g.append(line("M -66 -300 L -74 -210", 3, "#5a77a8") + line("M 66 -300 L 74 -210", 3, "#5a77a8"))
     if pose == "tsukkomi":
-        g.append(limb([(-104, -446), (-192, -402), (-276, -360)], 42, skin))
+        g.append(limb([(-104, -446), (-192, -402), (-276, -360)], 42, arm))
         g.append(f'<ellipse cx="-262" cy="-366" rx="7" ry="20" fill="none" stroke="#e8b830" stroke-width="5" transform="rotate(-24 -262 -366)"/>')
         g.append(chop_hand(-294, -352, skin, -24))
     else:
-        g.append(limb([(-108, -448), (-140, -370), (-134, -292)], 42, skin) + circle(-134, -282, 20, skin))
+        if wafuku:
+            g.append(path("M -110 -440 L -170 -380 L -172 -230 Q -150 -214 -128 -230 L -124 -330 Z", top) + flowers([(-150, -270)], 16, "#e3b341", "#ffffff"))
+        g.append(limb([(-108, -448), (-140, -370), (-134, -292)], 42, arm) + circle(-134, -282, 20, skin))
     # 髪（後ろ）
     g.append(path("M -80 -548 Q -90 -634 0 -636 Q 90 -634 80 -548 Q 98 -486 84 -432 Q 64 -416 54 -446 L -54 -446 Q -64 -416 -84 -432 Q -98 -486 -80 -548 Z", blonde))
     g.append(line("M -78 -520 Q -90 -480 -76 -444", 3, blonde_d) + line("M 78 -520 Q 90 -480 76 -444", 3, blonde_d))
@@ -306,6 +383,8 @@ def female_tsukkomi(mouth="open", pose="tsukkomi", look=False, santa=False):
     g.append(line("M -40 -606 Q -10 -616 20 -608", 4, "#fff2b8"))
     if santa:
         g.append(santa_hat(0, -604, 78, 130, -12))
+    if wafuku:   # 大きな花の髪飾り（成人式のギャルふう）
+        g.append(flowers([(-58, -610)], 44, "#ff4f8b") + flowers([(-20, -636)], 28, "#ffffff", "#ff4f8b") + flowers([(-92, -578)], 24, "#e3b341", "#ffffff"))
     # ハートの髪留め
     g.append(path("M 50 -600 C 44 -612 30 -604 38 -592 L 50 -580 L 62 -592 C 70 -604 56 -612 50 -600 Z", "#ff4f8b", 3))
     # 目（まつげ多め）
@@ -341,6 +420,38 @@ def side_curtains():
     return out
 
 
+def kadomatsu(x):
+    """門松（床に置く。わらを巻いた台に、斜めに切った竹 3 本と松）。"""
+    g = []
+    for dx, top in ((-26, 700), (26, 668), (0, 630)):
+        g.append(path(f"M {x + dx - 18} 900 L {x + dx - 18} {top + 22} L {x + dx + 18} {top} L {x + dx + 18} 900 Z", "#5aa864"))
+        g.append(ellipse(x + dx, top + 11, 17, 8, "#d8efc8", 3))
+        g.append(line(f"M {x + dx - 18} {top + 120} L {x + dx + 18} {top + 120}", 3, "#3d7a46"))
+    g.append(bumpy([(x - 56, 820, 26), (x + 56, 816, 26), (x - 30, 800, 24), (x + 30, 798, 24), (x, 812, 26)], "#2f6b3a"))
+    g.append(path(f"M {x - 64} 830 L {x + 64} 830 L {x + 56} 930 L {x - 56} 930 Z", "#c8a46a"))
+    for y in (855, 885, 912):
+        g.append(line(f"M {x - 60} {y} L {x + 60} {y}", 4, "#8a6a3a"))
+    return "".join(g)
+
+
+def shogatsu_deco():
+    """お正月の回の飾り：上の幕の下のしめ縄と紙垂、壁の梅の花、両脇の門松。"""
+    g = []
+    for x, y, r in ((330, 270, 24), (560, 210, 18), (1380, 220, 20), (1600, 300, 26), (760, 320, 14), (1170, 300, 16),
+                    (430, 440, 16), (1500, 460, 18)):
+        g.append(flowers([(x, y)], r * 1.6, "#ff9ab8", "#ffe14d"))
+    swag = "M 250 150 " + " ".join(f"Q {250 + i * 284 + 142} 220 {250 + (i + 1) * 284} 150" for i in range(5))
+    g.append(f'<path d="{swag}" fill="none" stroke="{OL}" stroke-width="36" stroke-linecap="round"/>')
+    g.append(f'<path d="{swag}" fill="none" stroke="#e2c27a" stroke-width="26" stroke-linecap="round"/>')
+    g.append(f'<path d="{swag}" fill="none" stroke="#b8924a" stroke-width="26" stroke-dasharray="4 18" stroke-linecap="round"/>')
+    for i in range(5):   # 紙垂（白いぎざぎざの紙）
+        cx = 250 + i * 284 + 142
+        for k in range(4):   # 互い違いに折れて下がる
+            g.append(rrect(cx - 9 + (12 if k % 2 else 0), 184 + k * 24, 18, 26, 2, "#ffffff", 3))
+    g.append(kadomatsu(330) + kadomatsu(1590))
+    return "".join(g)
+
+
 def xmas_deco():
     """クリスマスの回の飾り：壁の雪の結晶と、上の幕の下の緑のガーランド（赤と金の玉）。"""
     g = []
@@ -361,7 +472,8 @@ def xmas_deco():
     return "".join(g)
 
 
-def stage(xmas=False):
+def stage(special=None):
+    """舞台。special は特別版の飾り（"xmas"＝クリスマス、"shogatsu"＝お正月）。"""
     defs = """<defs>
 <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1433"/><stop offset="1" stop-color="#432766"/></linearGradient>
 <radialGradient id="burst" cx="0.5" cy="1" r="1"><stop offset="0" stop-color="#ffb3e6" stop-opacity="0.35"/><stop offset="1" stop-color="#ffb3e6" stop-opacity="0"/></radialGradient>
@@ -401,9 +513,9 @@ def stage(xmas=False):
     g.append(f'<rect x="0" y="1004" width="{W}" height="8" fill="#e3b341"/>')
     # スポットライト
     g.append('<path d="M 700 0 L 980 0 L 1260 960 L 560 960 Z" fill="url(#beam)"/>')
-    g.append(f'<ellipse cx="960" cy="935" rx="{720 if xmas else 600}" ry="105" fill="url(#spot)"/>')
-    if xmas:
-        g.append(xmas_deco())
+    g.append(f'<ellipse cx="960" cy="935" rx="{720 if special else 600}" ry="105" fill="url(#spot)"/>')
+    if special:
+        g.append({"xmas": xmas_deco, "shogatsu": shogatsu_deco}[special]())
     # 幕（左右と上）
     for d, tie_x in side_curtains():
         g.append(f'<path d="{d}" fill="url(#curtain)" stroke="#4a0614" stroke-width="4"/>')
@@ -493,11 +605,12 @@ COMBOS = {
     "male": {"boke": male_boke, "tsukkomi": male_tsukkomi, "mic_y": 390, "x": (770, 1165)},
     "female": {"boke": female_boke, "tsukkomi": female_tsukkomi, "mic_y": 560, "x": (790, 1140)},
 }
-# クリスマスの特別版（4 人・サンタの衣装）。4 人が並ぶよう 0.75 倍で描き、男のコンビを左、女のコンビを右に、それぞれのマイクの前に立たせる。
+# 特別版（4 人）。4 人が並ぶよう 0.75 倍で描き、男のコンビを左、女のコンビを右に、それぞれのマイクの前に立たせる。
 # x は proto/render.py の COMBOS["xmas"] と同じ。部品の名前は m／f（男／女）＋ boke／tsukkomi
-XMAS_SCALE = 0.75
-XMAS = {"m": {"boke": male_boke, "tsukkomi": male_tsukkomi, "x": (470, 766), "mic_x": 618, "mic_h": 540},
+FOUR_SCALE = 0.75
+FOUR = {"m": {"boke": male_boke, "tsukkomi": male_tsukkomi, "x": (470, 766), "mic_x": 618, "mic_h": 540},
         "f": {"boke": female_boke, "tsukkomi": female_tsukkomi, "x": (1150, 1412), "mic_x": 1281, "mic_h": 370}}
+SPECIALS = {"xmas": "santa", "shogatsu": "wafuku"}   # 特別版の名前（台本の combo:・部品のフォルダ・舞台の飾り）→ 衣装
 # 末尾に "look" が付くものは相手を見る顔（見つめ合う間と、そのあとのセリフで使う）
 SPRITE_POSES = {"boke": [("stand", "closed"), ("stand", "open"), ("hit1", "open"), ("hit", "open"), ("hit3", "open"), ("stand", "closed", "look"), ("stand", "open", "look")],
                 "tsukkomi": [("stand", "closed"), ("stand", "open"), ("tsukkomi", "closed"), ("tsukkomi", "open"),
@@ -518,25 +631,28 @@ def sprites():
                 name = f"{role}_{pose}_{mouth}" + ("_look" if look else "")
                 write(f"sprites/{combo}/{name}", doc(body, SPRITE, SPRITE), SPRITE, SPRITE, True)
     write("sprites/impact", doc(f'<g transform="translate(160 160)">{impact()}</g>', 320, 320), 320, 320, True)
-    xmas_sprites()
+    for special in SPECIALS:
+        special_sprites(special)
 
 
-def xmas_stage():
-    return stage(True) + "".join(mic(c["mic_x"], FLOOR_Y - round(c["mic_h"] * XMAS_SCALE)) for c in XMAS.values())
+def special_stage(special):
+    return stage(special) + "".join(mic(c["mic_x"], FLOOR_Y - round(c["mic_h"] * FOUR_SCALE)) for c in FOUR.values())
 
 
-def xmas_sprites():
+def special_sprites(special):
+    """特別版の部品（build/art/sprites/<special>/）。"""
     fx, fy = SPRITE_FEET
-    write("sprites/xmas/bg", doc(xmas_stage()))
+    costume = SPECIALS[special]
+    write(f"sprites/{special}/bg", doc(special_stage(special)))
     clip = "".join(f'<path d="{d}"/>' for d, _ in side_curtains())
-    front = f'<defs><clipPath id="sides">{clip}<rect x="0" y="0" width="1" height="1"/></clipPath></defs><g clip-path="url(#sides)">{stage(True)}</g>'
-    write("sprites/xmas/curtain_front", doc(front), W, H, True)
-    for kind, c in XMAS.items():
+    front = f'<defs><clipPath id="sides">{clip}<rect x="0" y="0" width="1" height="1"/></clipPath></defs><g clip-path="url(#sides)">{stage(special)}</g>'
+    write(f"sprites/{special}/curtain_front", doc(front), W, H, True)
+    for kind, c in FOUR.items():
         for role, poses in SPRITE_POSES.items():
             for pose, mouth, *look in poses:
-                body = f'<g transform="translate({fx} {fy}) scale({XMAS_SCALE})">{c[role](mouth, pose, bool(look), santa=True)}</g>'
+                body = f'<g transform="translate({fx} {fy}) scale({FOUR_SCALE})">{c[role](mouth, pose, bool(look), costume=costume)}</g>'
                 name = f"{kind}{role}_{pose}_{mouth}" + ("_look" if look else "")
-                write(f"sprites/xmas/{name}", doc(body, SPRITE, SPRITE), SPRITE, SPRITE, True)
+                write(f"sprites/{special}/{name}", doc(body, SPRITE, SPRITE), SPRITE, SPRITE, True)
 
 
 def main():
@@ -556,21 +672,25 @@ def main():
             body += place(fn(m, "stand"), x, 670, sc)
             x += half * sc + 22
     write("sheet", doc(body, sw, sh, "#f3eee6"), sw, sh)
-    xmas_preview()
+    for special in SPECIALS:
+        special_preview(special)
     sprites()
 
 
-def xmas_preview():
-    """クリスマスの回の 4 人の並び（確かめる用）。"""
-    write("combo_xmas", doc(xmas_stage() + "".join(
-        place(c["boke"]("closed", santa=True), c["x"][0], scale=XMAS_SCALE) + place(c["tsukkomi"]("open", "tsukkomi", santa=True), c["x"][1], scale=XMAS_SCALE)
-        for c in XMAS.values())))
+def special_preview(special):
+    """特別版の 4 人の並び（確かめる用。build/art/combo_<special>.png）。"""
+    costume = SPECIALS[special]
+    write(f"combo_{special}", doc(special_stage(special) + "".join(
+        place(c["boke"]("closed", costume=costume), c["x"][0], scale=FOUR_SCALE)
+        + place(c["tsukkomi"]("open", "tsukkomi", costume=costume), c["x"][1], scale=FOUR_SCALE)
+        for c in FOUR.values())))
 
 
 if __name__ == "__main__":
     import sys
-    if sys.argv[1:] == ["xmas"]:   # クリスマスの回の絵だけ：python art/gen_chars.py xmas
-        xmas_preview()
-        xmas_sprites()
+    if sys.argv[1:] and sys.argv[1] in SPECIALS:   # 特別版の絵だけ：python art/gen_chars.py shogatsu [preview]
+        special_preview(sys.argv[1])
+        if sys.argv[2:] != ["preview"]:
+            special_sprites(sys.argv[1])
     else:
         main()

@@ -22,6 +22,7 @@ THUMB_FONT = "C:/Windows/Fonts/BIZ-UDGothicB.ttc"
 FACE = {"male": {"A": -655, "B": -615}, "female": {"A": -450, "B": -546},
         "xmas": {"A": -491, "B": -461, "C": -338, "D": -410}}   # 4 人の回は部品が 0.75 倍
 SIZE = {"xmas": 0.75}   # 部品の大きさ（切り出す幅・顔の拡大をこれで割る）
+FACE["shogatsu"], SIZE["shogatsu"] = FACE["xmas"], SIZE["xmas"]   # お正月の特別版も 4 人の並びは同じ
 
 
 def crop_zoom(frame, cx, cy, w):

@@ -69,6 +69,11 @@ def spoken(text):
     return RUBY_RE.sub(r"\2", text).strip()
 
 
+def voice_combo(cfg, combo):
+    """声の設定を引くコンビの名前。特別版（4 人）は衣装ごとに名前が違っても声は同じ（voices.json の combo_alias）。"""
+    return cfg.get("combo_alias", {}).get(combo, combo)
+
+
 def parse(path):
     """(コンビ, 行の一覧, 題名など)。行は (話し手, 前の間, [(読む文, スタイル, 表示の文), ...], 表示の文, 叩く強さ)。
     「(見つめ合う 1.2)」の行は ("LOOK", 秒, [], "", False)。"""
@@ -345,11 +350,12 @@ def main():
     prev_start, prev_end = 0, int(0.5 * RATE)
     combo, lines, meta = parse(args.script)
     combos = cfg["voicevox"]["combos"] if args.backend == "voicevox" else cfg["combos"]
-    if combo not in combos:
-        raise SystemExit(f"voices.json の combos に '{combo}' がない")
+    vc = voice_combo(cfg, combo)   # 声の設定を借りる先（お正月の 4 人はクリスマスと同じ声）
+    if vc not in combos:
+        raise SystemExit(f"voices.json の combos に '{vc}' がない")
     print(f"コンビ: {combo}")
-    speakers = [k for k in combos[combo] if len(k) == 1]   # 話し手（漫才は A・B、ラジオは A〜D）
-    tks = cfg["combos"].get(combo, {}).get("tsukkomi") or {}   # ラジオには叩くツッコミがない
+    speakers = [k for k in combos[vc] if len(k) == 1]   # 話し手（漫才は A・B、ラジオと特別版は A〜D）
+    tks = cfg["combos"].get(vc, {}).get("tsukkomi") or {}   # ラジオには叩くツッコミがない
     for i, (who, gap, segs, shown, hit) in enumerate(lines):
         if who == "LOOK":  # 黙って見つめ合う。間だけ空けて、次のセリフまで相手を見る
             look_from = prev_end
@@ -376,7 +382,7 @@ def main():
         for speaker in (list(who) if who in ("AB", "CD") else speakers if who == "ALL" else [who]):
             t = start
             for j, (text, style, disp) in enumerate(segs):
-                s = settings(cfg, combo, speaker, style, args.backend)
+                s = settings(cfg, vc, speaker, style, args.backend)
                 text = reading(text, cfg, args.backend)
                 seg =seg_dir / f"{i:02d}_{speaker}_{j}.wav"
                 process(synth_raw(text, s, args.backend), seg, s, args.backend)

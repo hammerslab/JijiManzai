@@ -18,7 +18,7 @@ ROLE = {
     "xmas": {"A": "男ボケ・アフロ", "B": "男ツッコミ・モヒカン", "C": "女ボケ・ボブ", "D": "女ツッコミ・ギャル"},
 }
 GROUP = {"AB": "男 2 人", "CD": "女 2 人", "ALL": "4 人"}
-COMBO_NAME = {"male": "男性", "female": "女性", "xmas": "4 人（2 組そろって）"}
+COMBO_NAME = {"male": "男性", "female": "女性", "xmas": "4 人（2 組そろって）", "shogatsu": "4 人（2 組そろって・和服）"}
 STYLE = {"robot": "機械の声", "system": "アナウンスの声", "shibui": "かっこつけた声", "jii": "おじいさんの声",
          "cute": "作った高い声", "polite": "丁寧な棒読み", "chappy": "AIっぽい口調", "whisper": "小声"}
 QUOTE_RE = re.compile(r"「([^」]*)」@(\w+)")
@@ -27,9 +27,10 @@ QUOTE_RE = re.compile(r"「([^」]*)」@(\w+)")
 def to_md(path):
     path = Path(path)
     combo, lines, meta = synth.parse(path)
-    roles = ROLE[combo]
     cfg = json.loads((Path(__file__).parent / "voices.json").read_text(encoding="utf-8-sig"))
-    tks = cfg["combos"][combo]["tsukkomi"]
+    vc = synth.voice_combo(cfg, combo)
+    roles = ROLE[vc]
+    tks = cfg["combos"][vc]["tsukkomi"]
     prefixes = {who: tk["prefix"] for who, tk in tks.items()} if "prefix" not in tks else {"B": tks["prefix"]}   # 叩くツッコミの頭に自動で付く言葉
     out = [f"# {meta.get('title', path.stem)}", "",
            f"- お題：{meta.get('theme', '')}",
@@ -55,7 +56,7 @@ def to_md(path):
         text = synth.RUBY_RE.sub(r"\1", text)
         text = synth.TAG_RE.sub("〔間〕", text)
         text = QUOTE_RE.sub(lambda q: f"「{q.group(1)}」〈{STYLE.get(q.group(2), q.group(2))}〉", text)
-        name = ("2 人" if combo != "xmas" and who == "AB" else GROUP[who]) if who in GROUP else roles[who]
+        name = ("2 人" if vc != "xmas" and who == "AB" else GROUP[who]) if who in GROUP else roles[who]
         pre = "〔間〕" if gap and float(gap) >= 0.4 else ""
         mark = f"【{['', '叩く', '強く叩く', '思いきり叩く'][len(hit or '')]}】{prefixes.get(who, '')} " if hit else ""
         out.append(f"**{name}**　{pre}{mark}{text}")

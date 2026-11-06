@@ -54,6 +54,7 @@ COMBOS = {   # art/gen_chars.py の COMBOS と同じ立ち位置。head＝頭の
         {"who": "C", "sp": "fboke", "kind": "female", "x": 1150, "head": (0, -338), "bubble": (1200, 130), "end": 405},
         {"who": "D", "sp": "ftsukkomi", "kind": "female", "x": 1412, "head": (0, -410), "bubble": (1658, 130), "hand": (-220, -264), "end": 1515}]},
 }
+COMBOS["shogatsu"] = COMBOS["xmas"]   # お正月の特別版も同じ並び（衣装と舞台は build/art/sprites/shogatsu/）
 PARTNER = {"B": "A", "D": "C"}   # ツッコミ → 叩く相手（相方のボケ）
 
 
