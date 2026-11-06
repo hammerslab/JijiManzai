@@ -19,7 +19,9 @@ from render import FEET, FLOOR_Y, ROOT, Scene, pill, text_img
 TW, TH = 1280, 720
 THUMB_FONT = "C:/Windows/Fonts/BIZ-UDGothicB.ttc"
 # 顔の真ん中（部品画像の中。足元 (500, 960) から上へ）
-FACE = {"male": {"A": -655, "B": -615}, "female": {"A": -450, "B": -546}}
+FACE = {"male": {"A": -655, "B": -615}, "female": {"A": -450, "B": -546},
+        "xmas": {"A": -491, "B": -461, "C": -338, "D": -410}}   # 4 人の回は部品が 0.75 倍
+SIZE = {"xmas": 0.75}   # 部品の大きさ（切り出す幅・顔の拡大をこれで割る）
 
 
 def crop_zoom(frame, cx, cy, w):
@@ -62,15 +64,17 @@ def decorate(img, copy, theme, copy_y="bottom"):
 
 
 def faces(sc):
-    """2 人の顔を大きく：ぼかした舞台に、ボケ（正面・口を開け）とツッコミ（口を開け）を並べる。"""
+    """顔を大きく：ぼかした舞台に、ボケ（正面・口を開け）とツッコミ（口を開け）を並べる。4 人の回は 4 人を少し小さめに。"""
     bg = sc.bg.filter(ImageFilter.GaussianBlur(8)).resize((TW, TH))
     out = bg.convert("RGBA")
-    for who, name, cx in (("A", "boke_stand_open", 330), ("B", "tsukkomi_stand_open", 950)):
-        sp = sc.S[name]
-        fy = FEET[1] + FACE[sc.combo][who]
-        s = 1.9
+    many = len(sc.cast) > 2
+    xs = (330, 950) if not many else [TW * (i + 0.5) / len(sc.cast) for i in range(len(sc.cast))]
+    for m, cx in zip(sc.cast, xs):
+        sp = sc.S[f"{m['sp']}_stand_open"]
+        fy = FEET[1] + FACE[sc.combo][m["who"]]
+        s = (1.45 if many else 1.9) / SIZE.get(sc.combo, 1.0)
         big = sp.resize((int(sp.width * s), int(sp.height * s)), Image.LANCZOS)
-        out.alpha_composite(big, (int(cx - FEET[0] * s), int(300 - fy * s)))
+        out.alpha_composite(big, (int(cx - FEET[0] * s), int((240 if many else 300) - fy * s)))   # 4 人は文句にかからないよう少し上に
     return out
 
 
@@ -80,22 +84,33 @@ def main():
         tl = sc.tl
         copies = (tl.get("thumb") or [])[:3]
         copies += [tl.get("title", name)] * (3 - len(copies))
-        xb, xt = sc.c["x"]
-        mid = (xb + xt) / 2
+        k = SIZE.get(sc.combo, 1.0)
+        kind = {m["who"]: m["kind"] for m in sc.cast}
         # 女のボケは「いちばん強い」だと回っていて顔が見えないので、強い（2）までから選ぶ
-        top = 2 if sc.combo == "female" else 3
-        order = sorted(range(len(tl["hits"])), key=lambda i: (sc.levels[i] if sc.levels[i] <= top else 0, i), reverse=True)
+        def top(i):
+            return 2 if kind[render.PARTNER[sc.hit_who[i]]] == "female" else 3
+        order = sorted(range(len(tl["hits"])), key=lambda i: (sc.levels[i] if sc.levels[i] <= top(i) else 0, i), reverse=True)
         strongest = tl["hits"][order[0]] if order else tl["duration"] / 2
         second = tl["hits"][order[1]] if len(order) > 1 else strongest
-        face_y = FLOOR_Y + FACE[sc.combo]["A"] + 120
+        # 1 枚目は叩いた組に寄る（2 人の回は 2 人の真ん中）
+        hitter = sc.hit_who[order[0]] if order else "B"
+        victim = render.PARTNER[hitter]
+        mid = (sc.xs[hitter] + sc.xs[victim]) / 2
+        female = kind[victim] == "female"
+        face_y = FLOOR_Y + FACE[sc.combo][victim] + 120 * k
 
         shots = []
         f1 = sc.main_frame(strongest + 0.12, 1, bubbles=False)
-        shots.append(decorate(crop_zoom(f1, mid - 40, face_y + (60 if sc.combo == "male" else -40), 1250), copies[0], tl.get("theme")))
+        shots.append(decorate(crop_zoom(f1, mid - 40 * k, face_y + (-40 if female else 60) * k, 1250 * k), copies[0], tl.get("theme")))
         shots.append(decorate(faces(sc), copies[1], tl.get("theme")))
         t3 = tl["looks"][0][0] + 0.6 if tl["looks"] else second + 0.12
         f3 = sc.main_frame(t3, 1, bubbles=False)
-        shots.append(decorate(crop_zoom(f3, mid, face_y - (90 if sc.combo == "female" else 0), 1000), copies[2], tl.get("theme")))
+        if len(sc.cast) > 2:   # 4 人の回の 3 枚目は 4 人そろって
+            shots.append(decorate(crop_zoom(f3, sum(sc.xs.values()) / 4, 600, 1400), copies[2], tl.get("theme")))
+        else:
+            mid2 = sum(sc.c["x"]) / 2
+            face2 = FLOOR_Y + FACE[sc.combo]["A"] + 120
+            shots.append(decorate(crop_zoom(f3, mid2, face2 - (90 if sc.combo == "female" else 0), 1000), copies[2], tl.get("theme")))
         for i, im in enumerate(shots, 1):
             out = sc.base / f"thumbnail_{i}.png"
             im.save(out)

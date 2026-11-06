@@ -23,6 +23,7 @@ proto/synth.py が書き出したタイムライン（build/<台本>/timeline_ch
   - 締めの「どうも、ありがとうございましたー！」から、小さめの拍手が退場まで続く
   - 見つめ合う（台本の「(見つめ合う 秒)」）：黙っている間と次のセリフのあいだ、2 人とも相手を見て、少し相手のほうへ傾く
   - 待っている間も、2 人とも少しだけ上下に揺れる
+  - 特別版（台本の combo: xmas）は 4 人（A・B＝男のコンビ、C・D＝女のコンビ）。叩くツッコミは B が A を、D が C を叩く（タイムラインの hit_who）
 """
 import argparse
 import json
@@ -45,13 +46,31 @@ COMBOS = {   # art/gen_chars.py の COMBOS と同じ立ち位置。head＝頭の
              "bubble": {"A": (400, 150), "B": (1565, 160)}},
     "female": {"x": (790, 1140), "hand": (-294, -352), "head": {"A": (0, -450), "B": (0, -546)},
                "bubble": {"A": (430, 250), "B": (1525, 230)}},
+    # クリスマスの特別版（4 人・サンタの衣装）。部品は 0.75 倍（art/gen_chars.py の XMAS）。A・B＝男のコンビ、C・D＝女のコンビ。
+    # 吹き出しは頭の上に 4 つ並べ（重ならない）、しっぽは下へ。end＝エンディングで顔を出す位置
+    "xmas": {"x": (470, 1412), "lines": 3, "bubble_w": 380, "end_scale": 0.82, "cast": [
+        {"who": "A", "sp": "mboke", "kind": "male", "x": 470, "head": (0, -491), "bubble": (262, 24), "end": 180},
+        {"who": "B", "sp": "mtsukkomi", "kind": "male", "x": 766, "head": (0, -461), "bubble": (720, 24), "hand": (-240, -351), "end": 1745},
+        {"who": "C", "sp": "fboke", "kind": "female", "x": 1150, "head": (0, -338), "bubble": (1200, 130), "end": 405},
+        {"who": "D", "sp": "ftsukkomi", "kind": "female", "x": 1412, "head": (0, -410), "bubble": (1658, 130), "hand": (-220, -264), "end": 1515}]},
 }
+PARTNER = {"B": "A", "D": "C"}   # ツッコミ → 叩く相手（相方のボケ）
+
+
+def cast_of(combo):
+    """舞台に立つ人の一覧（左から）。2 人のコンビは COMBOS の x・head・bubble・hand から作る。"""
+    c = COMBOS[combo]
+    if "cast" in c:
+        return c["cast"]
+    return [{"who": "A", "sp": "boke", "kind": combo, "x": c["x"][0], "head": c["head"]["A"], "bubble": c["bubble"]["A"], "end": 260},
+            {"who": "B", "sp": "tsukkomi", "kind": combo, "x": c["x"][1], "head": c["head"]["B"], "bubble": c["bubble"]["B"],
+             "hand": c["hand"], "end": 1660}]
 # 叩く強さ（台本の ! の数）ごとの動き。knock＝女のボケが飛ぶ（距離, 高さ, 傾き, 回転）、bend＝男のボケの絵、
 # hold＝飛んだ・折れたままの秒、back＝戻る秒、fx＝当たりの星の大きさ、shake＝画面の揺れ、sfx＝効果音とその音量
 LEVELS = {
-    1: {"knock": (40, 25, 8, 0), "bend": "boke_hit1_open", "hold": 0.45, "back": 0.35, "fx": 0.8, "shake": 4, "sfx": ("pashi", 0.7)},
-    2: {"knock": (70, 42, 14, 0), "bend": "boke_hit_open", "hold": 0.55, "back": 0.45, "fx": 1.0, "shake": 8, "sfx": ("slap", 0.7)},
-    3: {"knock": (130, 70, 25, 360), "bend": "boke_hit3_open", "hold": 0.8, "back": 0.6, "fx": 1.35, "shake": 14, "sfx": ("slap", 1.0)},
+    1: {"knock": (40, 25, 8, 0), "bend": "hit1_open", "hold": 0.45, "back": 0.35, "fx": 0.8, "shake": 4, "sfx": ("pashi", 0.7)},
+    2: {"knock": (70, 42, 14, 0), "bend": "hit_open", "hold": 0.55, "back": 0.45, "fx": 1.0, "shake": 8, "sfx": ("slap", 0.7)},
+    3: {"knock": (130, 70, 25, 360), "bend": "hit3_open", "hold": 0.8, "back": 0.6, "fx": 1.35, "shake": 14, "sfx": ("slap", 1.0)},
 }
 FLY = 0.35          # 女のボケが飛んでいる秒
 APPLAUSE_GAIN = 0.3  # 締めのあいさつの拍手（控えめ）
@@ -184,10 +203,13 @@ class Bubbles:
 
     def __init__(self, tl, combo):
         self.font = ImageFont.truetype(SUB_FONT, 38)
-        self.c = COMBOS[combo]
-        self.by = {"A": [], "B": []}   # 話し手ごと：[(最初の声の頭, 最後の声の終わり, [(頭, 終わり, 字, 色), ...])]
+        c = COMBOS[combo]
+        self.cast = {m["who"]: m for m in cast_of(combo)}
+        self.bw, self.max_lines = c.get("bubble_w", BUBBLE_W), c.get("lines", BUBBLE_LINES)
+        self.tail_down = "cast" in c   # 4 人の回は頭の上に吹き出しを並べ、しっぽを下へ
+        self.by = {who: [] for who in self.cast}   # 話し手ごと：[(最初の声の頭, 最後の声の終わり, [(頭, 終わり, 字, 色), ...])]
         for ln in tl["lines"]:
-            for who in ("A", "B"):
+            for who in self.by:
                 segs = [sg for sg in ln.get("segs", []) if sg["who"] == who]
                 if not segs:
                     continue
@@ -203,7 +225,7 @@ class Bubbles:
         lines, cur, width = [], [], 0.0
         for ch, col in chars:
             cw = self.font.getlength(ch)
-            if cur and width + cw > BUBBLE_W and not (ch in "、。！？」…ー" and width + cw <= BUBBLE_W + 40):  # 句読点は行の頭に来ないよう前の行に残す
+            if cur and width + cw > self.bw and not (ch in "、。！？」…ー" and width + cw <= self.bw + 40):  # 句読点は行の頭に来ないよう前の行に残す
                 lines.append(cur)
                 cur, width = [], 0.0
             if not cur and ch == " ":
@@ -214,13 +236,14 @@ class Bubbles:
             lines.append(cur)
         return lines
 
-    def draw(self, frame, t, xb, xt, shake=0):
-        for who, x in (("A", xb), ("B", xt)):
+    def draw(self, frame, t, xs, shake=0):
+        """xs は話し手ごとの立ち位置の x。"""
+        for who, x in xs.items():
             active = [b for b in self.by[who] if b[0] <= t <= b[1] + BUBBLE_HOLD]
             if not active:
                 continue
             start, end, parts = active[-1]
-            other = [b[0] for b in self.by["B" if who == "A" else "A"] if start < b[0] <= t]
+            other = sorted(b[0] for w, bs in self.by.items() if w != who for b in bs if start < b[0] <= t)
             if other and t > end and t > other[-1] + 0.3:   # 相手が話し始めたら、言い終わった吹き出しは消す
                 continue
             full = [(ch, col) for _, _, text, col in parts for ch in text]
@@ -230,27 +253,35 @@ class Bubbles:
                 shown += [(ch, col) for ch in text[:reveal_count(text, frac)]]
             key = (who, start)
             if key not in self._layout:
-                self._layout[key] = min(BUBBLE_LINES, len(self.wrap(full)))
+                self._layout[key] = min(self.max_lines, len(self.wrap(full)))
             n_lines = self._layout[key]
             lines = self.wrap(shown)[-n_lines:] if shown else []
             self.box(frame, who, x + shake, n_lines, lines)
 
     def box(self, frame, who, x, n_lines, lines):
         lh, pad = 50, 24
-        w_box, h_box = BUBBLE_W + pad * 2, n_lines * lh + pad * 2 - 8
-        cx, y0 = self.c["bubble"][who]
+        w_box, h_box = self.bw + pad * 2, n_lines * lh + pad * 2 - 8
+        m = self.cast[who]
+        cx, y0 = m["bubble"]
         x0 = int(cx - w_box / 2)
         x1, y1 = x0 + w_box, y0 + h_box
-        hx, hy = self.c["head"][who]
-        tip = (x + hx + (-60 if who == "A" else 60), FLOOR_Y + hy)
-        side = x1 - 6 if who == "A" else x0 + 6
-        base = [(side, y0 + h_box * 0.45), (side, y0 + h_box * 0.75)]
+        hx, hy = m["head"]
         d = ImageDraw.Draw(frame)
         outline, fill = (42, 34, 48, 255), (255, 255, 255, 240)
+        if self.tail_down:   # 頭の上の吹き出し：下の辺から頭へ
+            tip = (x + hx, FLOOR_Y + hy - 40)
+            bx = min(max(tip[0], x0 + 50), x1 - 50)
+            base = [(bx - 22, y1 - 6), (bx + 22, y1 - 6)]
+            fix = [(base[0][0] + 6, base[0][1] - 3), tip, (base[1][0] - 6, base[1][1] - 3)]
+        else:                # 顔の横の吹き出し：内側の辺から顔へ
+            left = m["who"] == "A"
+            tip = (x + hx + (-60 if left else 60), FLOOR_Y + hy)
+            side = x1 - 6 if left else x0 + 6
+            base = [(side, y0 + h_box * 0.45), (side, y0 + h_box * 0.75)]
+            fix = [(base[0][0] + (-3 if left else 3), base[0][1] + 6), tip, (base[1][0] + (-3 if left else 3), base[1][1] - 6)]
         d.polygon([base[0], tip, base[1]], fill=fill, outline=outline, width=5)
         d.rounded_rectangle((x0, y0, x1, y1), radius=28, fill=fill, outline=outline, width=5)
-        d.polygon([(base[0][0] + (-3 if who == "A" else 3), base[0][1] + 6), tip,
-                   (base[1][0] + (-3 if who == "A" else 3), base[1][1] - 6)], fill=fill)   # しっぽの付け根の線を消す
+        d.polygon(fix, fill=fill)   # しっぽの付け根の線を消す
         y = y0 + pad - 4
         for line in lines:
             xx = x0 + pad
@@ -270,8 +301,11 @@ class Scene:
         self.backend = backend
         self.tl = json.loads((self.base / f"timeline_{backend}.json").read_text(encoding="utf-8"))
         self.levels = self.tl.get("hit_levels") or [2] * len(self.tl["hits"])   # 強さのない前のタイムラインは「強い」
+        self.hit_who = self.tl.get("hit_who") or ["B"] * len(self.tl["hits"])    # 叩く人のない前のタイムラインは B
         self.combo, self.fps = self.tl["combo"], self.tl["fps"]
         self.c = COMBOS[self.combo]
+        self.cast = cast_of(self.combo)
+        self.xs = {m["who"]: m["x"] for m in self.cast}
         sp = ROOT / "build" / "art" / "sprites"
         self.bg = Image.open(sp / self.combo / "bg.png").convert("RGBA")
         self.curtain = Image.open(sp / self.combo / "curtain_front.png").convert("RGBA")   # 左右の幕（袖）
@@ -288,73 +322,81 @@ class Scene:
             sprite = sprite.rotate(rot, resample=Image.BICUBIC, center=center)
         frame.paste(sprite, (int(x - FEET[0] + dx), int(FLOOR_Y - FEET[1] + dy)), sprite)  # 画面の外にはみ出してもよい
 
-    def walkers(self, frame, xb, xt, phase_b, phase_t, moving_b, moving_t):
-        """歩いている 2 人（口は閉じて正面）。歩いている間は弾んで左右に揺れる。"""
-        for x, name, phase, moving in ((xb, "boke_stand_closed", phase_b, moving_b), (xt, "tsukkomi_stand_closed", phase_t, moving_t)):
+    def walkers(self, frame, people):
+        """歩いている人（口は閉じて正面）。people は [(話し手, x, 歩く調子, 歩いているか)]。歩いている間は弾んで左右に揺れる。"""
+        sp = {m["who"]: m["sp"] for m in self.cast}
+        for who, x, phase, moving in people:
             hop = -abs(math.sin(phase)) * 14 if moving else 0
             rot = 3 * math.sin(phase) if moving else 0
             frame.alpha_composite(self.shadow, (int(x - 150), FLOOR_Y - 26))
-            self.paste(frame, self.S[name], x, 0, hop, rot)
+            self.paste(frame, self.S[f"{sp[who]}_stand_closed"], x, 0, hop, rot)
         frame.alpha_composite(self.curtain)   # 袖の幕の後ろから出入りする
+
+    def near_hit(self, t, who=None):
+        """いちばん近い叩くツッコミ（who を叩く・who が叩くものだけ。None なら全部）の (t からの秒, 強さの設定, 番号)。"""
+        hits = self.tl["hits"]
+        idx = [i for i in range(len(hits)) if who is None or who in (self.hit_who[i], PARTNER.get(self.hit_who[i]))]
+        if not idx:
+            return 99.0, LEVELS[2], None
+        i = min(idx, key=lambda i: abs(t - hits[i]))
+        return t - hits[i], LEVELS[self.levels[i]], i
 
     def main_frame(self, t, frame_no, bubbles=True):
         """漫才の部分の 1 コマ（t は漫才の頭からの秒）。bubbles=False で吹き出しなし（サムネイル・ショート用）。"""
-        c, tl, S = self.c, self.tl, self.S
+        S = self.S
         k = max(0, min(int(t * self.fps), len(self.mouth["A"]) - 1))
-        near = min(range(len(tl["hits"])), key=lambda i: abs(t - tl["hits"][i]), default=None)   # いちばん近い叩くツッコミ
-        tau = t - tl["hits"][near] if near is not None else 99.0
-        lv = LEVELS[self.levels[near]] if near is not None else LEVELS[2]
-        look = look_amount(t, tl["looks"])
+        tau, lv, _ = self.near_hit(t)
+        look = look_amount(t, self.tl["looks"])
         eyes = "_look" if look > 0.5 else ""
         shake = (lv["shake"] if frame_no % 2 else -lv["shake"]) if 0 <= tau < 0.12 else 0
         frame = self.bg.copy()
         if shake:
             frame.paste(self.bg, (shake, 0))
-        bob_b = 2 * math.sin(t * 2.1)            # 待っている間の小さな揺れ（2 人で周期をずらす）
-        bob_t = 2 * math.sin(t * 1.7 + 1.3)
-        xb, xt = c["x"]
-
-        # ボケ
-        bdx, bdy, brot, pivot = 0.0, bob_b, -LEAN * look, FEET
-        boke = S[f"boke_stand_{'open' if self.mouth['A'][k] else 'closed'}{eyes}"]
-        if self.combo == "female":   # 飛ばされて、戻ってくる
-            dist, height, tilt, spin = lv["knock"]
-            if 0 <= tau < FLY:
-                u = tau / FLY
-                bdx, bdy, brot = -dist * ease_out(u), -height * 4 * u * (1 - u), (tilt + spin) * ease_out(u)
-                boke = S["boke_hit_open"]
-                if spin:   # 回るときは腰を中心に（足元を中心にすると床にめり込む）
-                    pivot = (FEET[0], FEET[1] - 250)
-            elif FLY <= tau < lv["hold"]:
-                bdx, brot = -dist, tilt * (1 - (tau - FLY) / (lv["hold"] - FLY))
-                boke = S["boke_hit_open"]
-            elif lv["hold"] <= tau < lv["hold"] + lv["back"]:
-                bdx = -dist * (1 - ease_in_out((tau - lv["hold"]) / lv["back"]))
-        elif 0 <= tau < lv["hold"]:  # 腰から折れる（強さで角度が違う絵）
-            boke = S[lv["bend"]]
-            bdx, bdy = -14 * (1 - tau / lv["hold"]), 0.0
-        frame.alpha_composite(self.shadow, (int(xb - 150 + bdx * 0.8 + shake), FLOOR_Y - 26))
-        self.paste(frame, boke, xb + shake, bdx, bdy, brot, pivot)
-
-        # ツッコミ（手刀を振り込んでから当てる）
-        frame.alpha_composite(self.shadow, (int(xt - 150 + shake), FLOOR_Y - 26))
-        tm = "open" if self.mouth["B"][k] else "closed"
-        if -0.1 <= tau < 0.45:
-            swing = 50 * (-tau / 0.1) if tau < 0 else 0
-            self.paste(frame, S[f"tsukkomi_tsukkomi_{tm}"], xt + shake, swing)
-        else:
-            self.paste(frame, S[f"tsukkomi_stand_{tm}{eyes}"], xt + shake, 0, bob_t, LEAN * look)
+        stars = []
+        for n, m in enumerate(self.cast):
+            x, sp, mouth = m["x"], m["sp"], "open" if self.mouth[m["who"]][k] else "closed"
+            bob = 2 * math.sin(t * (2.1 if n % 2 == 0 else 1.7) + n * 1.3)   # 待っている間の小さな揺れ（人ごとに周期をずらす）
+            mt, mlv, mi = self.near_hit(t, m["who"])
+            if "hand" not in m:   # ボケ
+                dx, dy, rot, pivot = 0.0, bob, -LEAN * look, FEET
+                im = S[f"{sp}_stand_{mouth}{eyes}"]
+                if m["kind"] == "female":   # 飛ばされて、戻ってくる
+                    dist, height, tilt, spin = mlv["knock"]
+                    if 0 <= mt < FLY:
+                        u = mt / FLY
+                        dx, dy, rot = -dist * ease_out(u), -height * 4 * u * (1 - u), (tilt + spin) * ease_out(u)
+                        im = S[f"{sp}_hit_open"]
+                        if spin:   # 回るときは腰を中心に（足元を中心にすると床にめり込む）
+                            pivot = (FEET[0], FEET[1] - 250)
+                    elif FLY <= mt < mlv["hold"]:
+                        dx, rot = -dist, tilt * (1 - (mt - FLY) / (mlv["hold"] - FLY))
+                        im = S[f"{sp}_hit_open"]
+                    elif mlv["hold"] <= mt < mlv["hold"] + mlv["back"]:
+                        dx = -dist * (1 - ease_in_out((mt - mlv["hold"]) / mlv["back"]))
+                elif 0 <= mt < mlv["hold"]:  # 腰から折れる（強さで角度が違う絵）
+                    im = S[f"{sp}_{mlv['bend']}"]
+                    dx, dy = -14 * (1 - mt / mlv["hold"]), 0.0
+                frame.alpha_composite(self.shadow, (int(x - 150 + dx * 0.8 + shake), FLOOR_Y - 26))
+                self.paste(frame, im, x + shake, dx, dy, rot, pivot)
+            else:                 # ツッコミ（手刀を振り込んでから当てる）
+                frame.alpha_composite(self.shadow, (int(x - 150 + shake), FLOOR_Y - 26))
+                if mi is not None and self.hit_who[mi] == m["who"] and -0.1 <= mt < 0.45:
+                    swing = 50 * (-mt / 0.1) if mt < 0 else 0
+                    self.paste(frame, S[f"{sp}_tsukkomi_{mouth}"], x + shake, swing)
+                    if 0 <= mt < 0.2:
+                        stars.append((mt, mlv, x + m["hand"][0] + shake, FLOOR_Y + m["hand"][1]))
+                else:
+                    self.paste(frame, S[f"{sp}_stand_{mouth}{eyes}"], x + shake, 0, bob, LEAN * look)
 
         # 当たりの星
-        if 0 <= tau < 0.2:
-            s = (0.6 + 2.5 * tau) * lv["fx"]
+        for mt, mlv, hx, hy in stars:
+            s = (0.6 + 2.5 * mt) * mlv["fx"]
             fx = self.impact.resize((int(320 * s), int(320 * s)), Image.BICUBIC)
-            hx, hy = xt + c["hand"][0] + shake, FLOOR_Y + c["hand"][1]
             frame.alpha_composite(fx, (int(hx - fx.width / 2), int(hy - fx.height / 2)))
 
         # 吹き出し
         if bubbles:
-            self.bubbles.draw(frame, t, xb, xt, shake)
+            self.bubbles.draw(frame, t, self.xs, shake)
         return frame
 
 
@@ -388,7 +430,8 @@ class Format:
         self.label = pill("名場面", 44, (255, 214, 64, 255), (42, 34, 48, 255), pad=(30, 10))
         self.sub_btn = pill("チャンネル登録", 60, (230, 40, 60, 255), (255, 255, 255, 255), pad=(48, 18))
         self.sub_note = text_img("高評価・通知もよろしく！", 40, (255, 255, 255, 255), (42, 34, 48, 255), 6)
-        self.end_chars = {k: scaled(v, 0.62) for k, v in scene.S.items() if k.startswith(("boke_stand", "tsukkomi_stand")) and "look" not in k}
+        sps = tuple(f"{m['sp']}_stand" for m in scene.cast)
+        self.end_chars = {k: scaled(v, scene.c.get("end_scale", 0.62)) for k, v in scene.S.items() if k.startswith(sps) and "look" not in k}
         hits = tl["hits"]
         picks = [hits[i] for i in sorted({0, len(hits) // 2, len(hits) - 1})] if hits else [tl["duration"] / 2]
         self.clips = [(max(0.0, h - CLIP_BEFORE), min(tl["duration"], h + CLIP_AFTER)) for h in picks]
@@ -397,7 +440,7 @@ class Format:
 
     def frame(self, T, n):
         sc = self.sc
-        xb, xt = sc.c["x"]
+        cast, many = sc.cast, len(sc.cast) > 2
         if T < T_TITLE:                                   # タイトル
             frame = self.title_bg.copy()
             u = clamp01((T - 0.2) / 0.35)
@@ -410,21 +453,28 @@ class Format:
             if fade:
                 frame = Image.blend(frame, sc.bg, fade)
             return frame
-        if T < self.t_main:                               # 袖から登場（ボケが先に、奥の立ち位置まで歩く）
+        if T < self.t_main:                               # 袖から登場（奥の立ち位置の人から順に、少しずつずらして）
             t = T - T_TITLE
-            ub, ut = clamp01(t / 2.8), clamp01((t - 0.25) / 2.75)
+            people = []
+            for i, m in enumerate(cast):
+                u = clamp01((t - (0.15 if many else 0.25) * i) / (2.8 - 0.05 * i))
+                wing = WING_X + 150 * i
+                people.append((m["who"], wing + (m["x"] - wing) * ease_out(u), t * 9 + 1.5 * i, u < 1))
             frame = sc.bg.copy()
-            sc.walkers(frame, WING_X + (xb - WING_X) * ease_out(ub), WING_X + 150 + (xt - WING_X - 150) * ease_out(ut),
-                       t * 9, t * 9 + 1.5, ub < 1, ut < 1)
+            sc.walkers(frame, people)
             return frame
         if T < self.t_out:                                # 漫才
             return sc.main_frame(T - self.t_main, n)
-        if T < self.t_end:                                # 袖へ退場（ツッコミが先に）
+        if T < self.t_end:                                # 袖へ退場（袖に近い人から）
             t = T - self.t_out
-            ut, ub = clamp01(t / 2.2), clamp01((t - 0.4) / 2.4)
+            people = []
+            for i, m in enumerate(cast):
+                r = len(cast) - 1 - i
+                u = clamp01((t - (0.25 if many else 0.4) * r) / (2.2 if many else 2.2 + 0.2 * r))
+                wing = WING_X + 150 * i
+                people.append((m["who"], m["x"] + (wing - m["x"]) * ease_in_out(u), t * 9 + 1.5 * i, 0 < u < 1))
             frame = sc.bg.copy()
-            sc.walkers(frame, xb + (WING_X - xb) * ease_in_out(ub), xt + (WING_X + 150 - xt) * ease_in_out(ut),
-                       t * 9, t * 9 + 1.5, 0 < ub < 1, 0 < ut < 1)
+            sc.walkers(frame, people)
             return frame
         return self.ending(T - self.t_end, n)
 
@@ -449,19 +499,18 @@ class Format:
         s = 1 + 0.05 * max(0.0, math.sin(t * 5))
         center_paste(frame, scaled(self.sub_btn, s), W / 2, 760)
         center_paste(frame, self.sub_note, W / 2, 850)
-        # 2 人（左右の下から顔を出して、話す人だけ口を動かす）
+        # 出演者（左右の下から顔を出して、話す人だけ口を動かす）
         te = t - 0.5
         k = max(0, min(int(te * self.end_tl["fps"]), len(self.end_mouth["A"]) - 1))
-        ma = "open" if te >= 0 and self.end_mouth["A"][k] else "closed"
-        mb = "open" if te >= 0 and self.end_mouth["B"][k] else "closed"
-        for x, name, ph in ((260, f"boke_stand_{ma}", 0.0), (1660, f"tsukkomi_stand_{mb}", 1.3)):
-            im = self.end_chars[name]
-            frame.alpha_composite(im, (int(x - im.width / 2), int(H - im.height * 0.83 + 3 * math.sin(t * 2 + ph))))
-        # 字幕（いま話しているセリフ）
+        for i, m in enumerate(sc.cast):
+            mo = "open" if te >= 0 and self.end_mouth[m["who"]][k] else "closed"
+            im = self.end_chars[f"{m['sp']}_stand_{mo}"]
+            frame.alpha_composite(im, (int(m["end"] - im.width / 2), int(H - im.height * 0.83 + 3 * math.sin(t * 2 + 1.3 * i))))
+        # 字幕（いま話しているセリフ。ボケの声は色を変える）
         for a, b, who, text in self.captions:
             if a <= te < b + 0.2:
                 if text not in self._cap_cache:
-                    color = (255, 236, 150, 255) if who == "A" else (255, 255, 255, 255)
+                    color = {"A": (255, 236, 150, 255), "C": (255, 200, 222, 255)}.get(who, (255, 255, 255, 255))
                     self._cap_cache[text] = caption_img(text, 46, color, 1100)
                 center_paste(frame, self._cap_cache[text], W / 2, 985)
                 break
@@ -493,7 +542,7 @@ def build_audio(fmt, rate):
         name, gain = LEVELS[lv]["sfx"]
         put(sfx[name], fmt.t_main + h - 0.03, gain)
     # 締めの「どうも、ありがとうございましたー！」（最後の 2 人のセリフ）から、控えめな拍手を退場まで
-    thanks = [ln["start"] for ln in sc.tl["lines"] if ln["who"] == "AB"]
+    thanks = [ln["start"] for ln in sc.tl["lines"] if ln["who"] in ("AB", "ALL")]
     if thanks:
         put(clap, fmt.t_main + thanks[-1] + 0.3, APPLAUSE_GAIN)
     out = deb[:int((T_OUT + 0.6) * rate)].copy()

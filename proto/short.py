@@ -26,10 +26,11 @@ CARD = 3.0           # 最後のカード
 STAGE_Y = 520        # 舞台の上の y
 TEXT_BOX = (50, 1190, 960, 1600)   # セリフの枠（右の 120px と下の 320px は空ける）
 LINE_FONT = ImageFont.truetype(render.SUB_FONT, 58)
-NAME = {"male": {"A": "ボケ", "B": "ツッコミ"}, "female": {"A": "ボケ", "B": "ツッコミ"}}
-WHO_COLOR = {"A": (70, 150, 140), "B": (60, 80, 150)}
-# 舞台は 2 人に寄って切り出す（縦の画面では小さく見えるため）：(上の y, 下の y)。横は 16:9 になるよう 2 人の真ん中から
-CROP = {"male": (100, 930), "female": (250, 960)}
+NAME = {"male": {"A": "ボケ", "B": "ツッコミ"}, "female": {"A": "ボケ", "B": "ツッコミ"},
+        "xmas": {"A": "アフロ", "B": "モヒカン", "C": "ボブ", "D": "ギャル"}}
+WHO_COLOR = {"A": (70, 150, 140), "B": (60, 80, 150), "C": (190, 80, 130), "D": (200, 120, 40)}
+# 舞台は 2 人に寄って切り出す（縦の画面では小さく見えるため）：(上の y, 下の y)。横は 16:9 になるよう 2 人の真ん中から。4 人の回は 4 人が入る幅
+CROP = {"male": (100, 930), "female": (250, 960), "xmas": (220, 950)}
 
 
 def pick_range(tl):
@@ -82,7 +83,7 @@ class Short:
 
     def current_line(self, t):
         """いま話しているセリフ（話し手, 出す字）。声に合わせて少しずつ。"""
-        for who in ("B", "A"):
+        for who in [w for w in ("B", "D", "A", "C") if w in self.sc.bubbles.by]:   # ツッコミを先に見る
             for start, end, parts in reversed(self.sc.bubbles.by[who]):
                 if start <= t <= end + 0.6:
                     shown = ""

@@ -30,11 +30,12 @@ BFT = Path("Z:/git/BlackFairyTales")  # 先に作った童話の動画。読み�
 ENV_FILES = [ROOT / ".env", BFT / ".env"]
 GEMINI_MODEL = "gemini-2.5-pro-tts"
 
-LINE_RE = re.compile(r"^(ALL|AB|A|B|C|D)(!{1,3})?(?:\(([-+]?\d+(?:\.\d+)?)\))?:\s*(.+)$")
+LINE_RE = re.compile(r"^(ALL|AB|CD|A|B|C|D)(!{1,3})?(?:\(([-+]?\d+(?:\.\d+)?)\))?:\s*(.+)$")
 LOOK_RE = re.compile(r"^\(見つめ合う\s+(\d+(?:\.\d+)?)\)$")
 QUOTE_RE = re.compile(r"「([^」]*)」@(\w+)\s*")
 RUBY_RE = re.compile(r"\{([^|}]*)\|([^}]*)\}")
 TAG_RE = re.compile(r"\[pause(?: short| long)?\]")
+PARTNER = {"B": "A", "D": "C"}   # ツッコミ → 相方のボケ（4 人の回は A・B が男のコンビ、C・D が女のコンビ）
 
 
 def env_key(name):
@@ -338,7 +339,7 @@ def main():
     seg_dir.mkdir(parents=True, exist_ok=True)
 
     placed, timeline = [], []  # placed: (開始サンプル, pcm, 話し手)
-    events = {"lines": [], "hits": [], "hit_levels": [], "looks": [], "topics": []}  # 動画用（秒）。hit_levels は hits と同じ順の叩く強さ（1〜3）。topics はラジオの話題の見出し
+    events = {"lines": [], "hits": [], "hit_levels": [], "hit_who": [], "looks": [], "topics": []}  # 動画用（秒）。hit_levels・hit_who は hits と同じ順の叩く強さ（1〜3）と叩く人。topics はラジオの話題の見出し
     look_from = None  # 見つめ合いが始まった時刻。次のセリフが終わるまで続ける
     topic = None      # ラジオ：次のセリフから始まる話題の見出し
     prev_start, prev_end = 0, int(0.5 * RATE)
@@ -348,7 +349,7 @@ def main():
         raise SystemExit(f"voices.json の combos に '{combo}' がない")
     print(f"コンビ: {combo}")
     speakers = [k for k in combos[combo] if len(k) == 1]   # 話し手（漫才は A・B、ラジオは A〜D）
-    tk = cfg["combos"].get(combo, {}).get("tsukkomi")      # ラジオには叩くツッコミがない
+    tks = cfg["combos"].get(combo, {}).get("tsukkomi") or {}   # ラジオには叩くツッコミがない
     for i, (who, gap, segs, shown, hit) in enumerate(lines):
         if who == "LOOK":  # 黙って見つめ合う。間だけ空けて、次のセリフまで相手を見る
             look_from = prev_end
@@ -362,15 +363,17 @@ def main():
         if gap is None and look_from is not None:
             gap = 0.0
         if gap is None:  # ボケに返すツッコミは語尾にかぶせる。それ以外は少し間をあける
-            gap = -cfg["reply_overlap"] if who == "B" and i > 0 and lines[i - 1][0] == "A" else cfg["default_gap"]
+            reply = who == "B" or who in tks   # D が C に返すのは 4 人の回だけ（ラジオの D は読み手なのでかぶせない）
+            gap = -cfg["reply_overlap"] if reply and i > 0 and lines[i - 1][0] == PARTNER.get(who) else cfg["default_gap"]
         if hit:  # 叩くツッコミ：頭に「ワッーーツ！」「えぐーー！」など（別の音声にして頭を大きく）、語尾も大きく、前のセリフの語尾にかぶせる
+            tk = tks.get(who, tks) if "prefix" not in tks else tks   # 4 人の回は、ツッコミ（B・D）ごとに設定がある
             segs = [(tk["prefix"], None, tk["prefix"])] + segs
             shown = f"{tk['prefix']} {shown}"
             gap = min(gap, -tk["overlap"])
         start = max(prev_start + int(0.3 * RATE), prev_end + int(gap * RATE))
         line_segs = []  # 吹き出し用：区切りごとの時刻と表示の字
         end = start
-        for speaker in (["A", "B"] if who == "AB" else speakers if who == "ALL" else [who]):
+        for speaker in (list(who) if who in ("AB", "CD") else speakers if who == "ALL" else [who]):
             t = start
             for j, (text, style, disp) in enumerate(segs):
                 s = settings(cfg, combo, speaker, style, args.backend)
@@ -385,8 +388,8 @@ def main():
                 spoken_chars = len(TAG_RE.sub("", text))
                 if len(pcm) / RATE > 2.0 and len(pcm) / RATE > 0.3 * spoken_chars:  # Chirp がまれに語尾を何秒も伸ばす
                     print(f"  ！ 長すぎる声 {seg.name}: {len(pcm) / RATE:.1f} 秒 / {spoken_chars} 文字「{text[:20]}」")
-                if who in ("AB", "ALL"):  # 声を重ねると割れるので、1 人ずつ下げる（2 人は 4dB、4 人は 8dB）
-                    pcm = array.array("h", (int(v * (0.63 if who == "AB" else 0.4)) for v in pcm))
+                if who in ("AB", "CD", "ALL"):  # 声を重ねると割れるので、1 人ずつ下げる（2 人は 4dB、4 人は 8dB）
+                    pcm = array.array("h", (int(v * (0.4 if who == "ALL" else 0.63)) for v in pcm))
                 placed.append((t, pcm, speaker))
                 line_segs.append({"who": speaker, "start": round(t / RATE, 3), "end": round((t + len(pcm)) / RATE, 3),
                                   "text": disp, "style": style})
@@ -402,6 +405,7 @@ def main():
         if hit:
             events["hits"].append(round(start / RATE, 3))
             events["hit_levels"].append(hit)
+            events["hit_who"].append(who)
         if look_from is not None:
             events["looks"].append([round(look_from / RATE, 3), round(end / RATE, 3)])
             look_from = None

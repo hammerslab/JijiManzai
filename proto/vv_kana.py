@@ -30,7 +30,7 @@ def main():
             if who in ("LOOK", "TOPIC"):
                 continue
             for text, style, _ in segs:
-                s = synth.vv_settings(cfg, combo, "A" if who in ("AB", "ALL") else who, style)
+                s = synth.vv_settings(cfg, combo, "A" if who == "ALL" else who[0], style)   # 声をそろえて言う行（AB・CD・ALL）は先頭の人の読みで見る
                 spoken = synth.reading(text, cfg, "voicevox").replace("[pause short]", "、").replace("[pause long]", "、、、").replace("[pause]", "、、")
                 sid = synth.vv_style_id(s["character"], s["style"])
                 q = json.loads(synth.vv_request(f"/audio_query?text={urllib.parse.quote(spoken)}&speaker={sid}"))

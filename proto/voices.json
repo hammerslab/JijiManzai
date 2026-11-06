@@ -20,6 +20,17 @@
       "B": { "voice": "ja-JP-Chirp3-HD-Autonoe", "speed": 1.18, "pitch": 1.05, "gain_db": 2.5, "gemini_voice": "Autonoe",
              "prompt": "漫才のツッコミ。高めの声で、ハキハキと歯切れよく勢いのある30代の女性。標準語で、ツッコミは強く鋭く" },
       "tsukkomi": { "prefix": "えぐーー！", "head_sec": 0.3, "head_db": 4, "tail_sec": 0.35, "tail_db": 4, "overlap": 0.15 }
+    },
+    "xmas": {
+      "_note": "クリスマスの特別版（4 人）。A・B＝男のコンビ、C・D＝女のコンビ。叩くツッコミは B が A を、D が C を叩く（台本の B! / D!）",
+      "A": { "voice": "ja-JP-Chirp3-HD-Iapetus", "speed": 1.0, "pitch": 1.0, "gain_db": 0.5 },
+      "B": { "voice": "ja-JP-Chirp3-HD-Puck", "speed": 1.18, "pitch": 1.0, "gain_db": 2.5 },
+      "C": { "voice": "ja-JP-Chirp3-HD-Gacrux", "speed": 1.0, "pitch": 1.0, "gain_db": 0.5 },
+      "D": { "voice": "ja-JP-Chirp3-HD-Autonoe", "speed": 1.18, "pitch": 1.05, "gain_db": 2.5 },
+      "tsukkomi": {
+        "B": { "prefix": "ワッーーツ！", "head_sec": 0.3, "head_db": 7, "tail_sec": 0.35, "tail_db": 7, "overlap": 0.15 },
+        "D": { "prefix": "えぐーー！", "head_sec": 0.3, "head_db": 4, "tail_sec": 0.35, "tail_db": 4, "overlap": 0.15 }
+      }
     }
   },
   "voicevox": {
@@ -34,6 +45,13 @@
       "female": {
         "A": { "character": "波音リツ", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
         "B": { "character": "あんこもん", "style": "つよつよ", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 }
+      },
+      "xmas": {
+        "_note": "クリスマスの特別版（4 人）。漫才と同じ声：A＝男ボケ、B＝男ツッコミ、C＝女ボケ、D＝女ツッコミ",
+        "A": { "character": "麒ヶ島宗麟", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "B": { "character": "白上虎太郎", "style": "ふつう", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 },
+        "C": { "character": "波音リツ", "style": null, "speed": 1.0, "pitch": 0.0, "intonation": 0.9, "gain_db": 0.5 },
+        "D": { "character": "あんこもん", "style": "つよつよ", "speed": 1.15, "pitch": -0.06, "intonation": 1.7, "gain_db": 2.5 }
       },
       "radio": {
         "_note": "ほのぼの週刊ラジオ（docs/RADIO.md）。A＝男ボケ（アフロ）、B＝男ツッコミ（モヒカン・たとえ係）、C＝女ボケ（ボブ）、D＝女ツッコミ（金髪ギャル・読み手）。漫才より少しゆっくり、ツッコミの音量も控えめ",

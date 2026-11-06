@@ -15,6 +15,7 @@
 - **YouTube に上げる手順**（チャンネルの作り方、1 本ごとの手順、mp4 の形式、収益化の注意、まだ作っていない仕組み）は [docs/YOUTUBE.md](docs/YOUTUBE.md)。BlackFairyTales（毒入り童話）の手順を元にしている
 - 台本は `scripts/`（直すのは `.txt`、読む用の `.md` は `proto/script_md.py` で作る）。前の台本は `proto/` にある
 - 動画の形は決まっている：タイトル（題名とお題）→ 2 人が袖から登場 → 漫才（3 分以内）→ 袖へ退場 → エンディング（名場面を流しながら、2 人の声でチャンネル登録を頼む。形は固定で、ボケのひとことだけ回ごとに変える）
+- **特別版**（クリスマスなど）は 2 組そろって 4 人（`combo: xmas`）、衣装も回に合わせ、動画全体が 8 分を超える長尺（途中に広告）。書き方は [docs/SCRIPT_GUIDE.md](docs/SCRIPT_GUIDE.md)、絵と動画は [docs/VIDEO_GUIDE.md](docs/VIDEO_GUIDE.md)
 
 ## 構成
 
