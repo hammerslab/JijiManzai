@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "build" / "cache" / "tts"
 RATE = 24000
 FPS = 30  # 動画のコマ数（口パクのタイムラインもこの刻み）
-BFT = Path("Z:/git/BlackFairyTales")  # 先に作った童話の動画。読み間違いのリストと数え方の読みを共有する
+BFT = Path("Z:/git/Movie/BlackFairyTales")  # 先に作った童話の動画。読み間違いのリストと数え方の読みを共有する
 ENV_FILES = [ROOT / ".env", BFT / ".env"]
 GEMINI_MODEL = "gemini-2.5-pro-tts"
 

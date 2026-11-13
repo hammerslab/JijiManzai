@@ -1,15 +1,14 @@
 # CLAUDE.md — 時事漫才動画（JijiManzai）
 
 時事の話題を、決まったコンビ 2 組（男性・女性）の漫才にして動画にする。いまは試作の段階（`proto/` と `art/`）。
-先行して作った童話パロディ動画の仕組み（`Z:/git/BlackFairyTales`）を参考にしている。
+先行して作った童話パロディ動画の仕組み（`Z:/git/Movie/BlackFairyTales`）を参考にしている。
 
 ## 守ること
 
-- 返事・報告・コメントは日本語
+動画 3 つに共通する決まり（進め方・声・書き出しの罠・YouTube・Windows の罠）は、親フォルダの `Z:\git\Movie\CLAUDE.md`（自動で読まれる）。ここにはこの作品のことだけを書く。
+
 - **漫才の台本を書く・直すときは、先に [docs/SCRIPT_GUIDE.md](docs/SCRIPT_GUIDE.md) を読む**（決まりごとと、使える漫才の技）
-- 音は聴けないので、声の出来は利用者に聴いて判断してもらう。長さ・音量・音割れは測って確かめる
-- 書き出した動画は、コマを開いて目で見る
-- **読み間違いのリストは BlackFairyTales と共通**（`Z:/git/BlackFairyTales/tools/config.json` の `readings.ja`。synth.py が読む）。ここで見つけた・指摘された読み間違いも、そのリストに足す。漫才だけで使う読み替えは `proto/voices.json` の `readings`
+- **読み間違いのリストは BlackFairyTales と共通**（`Z:/git/Movie/BlackFairyTales/tools/config.json` の `readings.ja`。synth.py が読む）。ここで見つけた・指摘された読み間違いも、そのリストに足す。漫才だけで使う読み替えは `proto/voices.json` の `readings`
 - **声は VOICEVOX でも作れる**（`--backend voicevox`。アプリを起動しておく）。配役と調整は `proto/voices.json` の `voicevox`、キャラの規約とクレジット表記は [docs/VOICEVOX.md](docs/VOICEVOX.md)。VOICEVOX は読む前に読みをカナで返すので、`proto/vv_kana.py` で全行の読みを書き出して読み間違いを確かめる
 - **動画は、利用者が「動画を作って」と言うまで作らない**（音声の試作はしてよい）。動画を作るときの決まり（吹き出しは声に合わせて字を出す、YouTube の字幕は付けない、叩く強さで飛び方・折れ方を変える、締めのあいさつに小さな拍手）は [docs/VIDEO_GUIDE.md](docs/VIDEO_GUIDE.md)。確かめるのは `render.py --frames` の静止画でよい
 - **YouTube に上げる手順**（チャンネルの作り方、1 本ごとの手順、mp4 の形式、収益化の注意、まだ作っていない仕組み）は [docs/YOUTUBE.md](docs/YOUTUBE.md)。BlackFairyTales（毒入り童話）の手順を元にしている
