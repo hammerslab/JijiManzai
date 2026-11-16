@@ -18,7 +18,7 @@
 
 ## フォルダの場所
 
-`Z:\git\Movie\JijiManzai` と `Z:\git\Movie\BlackFairyTales` に置く（別の場所にするなら、`proto/synth.py` の `BFT` と、予定のタスクの中のパスを直す）。読み間違いの共通のリストは BlackFairyTales 側にあるので、**2 つともクローンする**。親フォルダの `Z:\git\Movie\CLAUDE.md` も要る。
+`Z:\git\Movie\JijiManzai` と `Z:\git\Movie\BlackFairyTales` に置く（別の場所にするなら、`proto/synth.py` の `BFT` と、予定のタスクの中のパスを直す）。読み間違いの共通のリストは BlackFairyTales 側にあるので、**2 つともクローンする**。親フォルダの `Z:\git\Movie\CLAUDE.md` も要る（`Z:\git\Movie` は git に入っていないので、写しを [docs/parent_CLAUDE.md](parent_CLAUDE.md) に置いてある。新しい PC では、それを `Z:\git\Movie\CLAUDE.md` にコピーする）。
 
 ## 入れるもの
 

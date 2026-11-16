@@ -16,6 +16,7 @@
 - 動画の形は決まっている：タイトル（題名とお題）→ 2 人が袖から登場 → 漫才（3 分以内）→ 袖へ退場 → エンディング（名場面を流しながら、2 人の声でチャンネル登録を頼む。形は固定で、ボケのひとことだけ回ごとに変える）
 - **特別版**（クリスマス・お正月など）は 2 組そろって 4 人（`combo: xmas` / `shogatsu`）、衣装も回に合わせ、動画全体が 8 分を超える長尺（途中に広告）。書き方は [docs/SCRIPT_GUIDE.md](docs/SCRIPT_GUIDE.md)、絵と動画は [docs/VIDEO_GUIDE.md](docs/VIDEO_GUIDE.md)
 - **PC を移るとき**の準備（入れるソフト・キー・予定のタスクの作り直し・git に入っているもの）は [docs/SETUP.md](docs/SETUP.md)
+- 親フォルダの `Z:\git\Movie\CLAUDE.md` は git に入っていないので、写しを [docs/parent_CLAUDE.md](docs/parent_CLAUDE.md) に置いている。**親の CLAUDE.md を直したら、写しも同じに直す**
 
 ## 運用の決まり（利用者から言われたこと）
 
