@@ -1,5 +1,10 @@
 # 書き出し（TTS のキャッシュ、絵の部品、音声、動画、コマ）。どれも作り直せる
-/build/
+# ただし、各回の説明文（youtube.txt・youtube_short.txt）は作り直せないので git に入れる（PC を移っても上げられるように）
+/build/*
+!/build/[0-9][0-9][0-9][0-9]_*/
+/build/[0-9][0-9][0-9][0-9]_*/*
+!/build/[0-9][0-9][0-9][0-9]_*/youtube.txt
+!/build/[0-9][0-9][0-9][0-9]_*/youtube_short.txt
 
 __pycache__/
 

@@ -15,6 +15,14 @@
 - 台本は `scripts/`（直すのは `.txt`、読む用の `.md` は `proto/script_md.py` で作る）。前の台本は `proto/` にある
 - 動画の形は決まっている：タイトル（題名とお題）→ 2 人が袖から登場 → 漫才（3 分以内）→ 袖へ退場 → エンディング（名場面を流しながら、2 人の声でチャンネル登録を頼む。形は固定で、ボケのひとことだけ回ごとに変える）
 - **特別版**（クリスマス・お正月など）は 2 組そろって 4 人（`combo: xmas` / `shogatsu`）、衣装も回に合わせ、動画全体が 8 分を超える長尺（途中に広告）。書き方は [docs/SCRIPT_GUIDE.md](docs/SCRIPT_GUIDE.md)、絵と動画は [docs/VIDEO_GUIDE.md](docs/VIDEO_GUIDE.md)
+- **PC を移るとき**の準備（入れるソフト・キー・予定のタスクの作り直し・git に入っているもの）は [docs/SETUP.md](docs/SETUP.md)
+
+## 運用の決まり（利用者から言われたこと）
+
+- **commit と push は聞かずにやる**（2026-11-04 利用者「コミットのタイミングだと思うところで、コミットとプッシュを同時に」）。台本を書き終えた、予定を組み直して KEYWORDS.md・docs を直した、など 1 つの作業がまとまったら commit → `git push origin main`。声や動画を作っている途中、Studio の結果を待っている間には切らない。報告には commit の番号と新しいファイルを書く。BlackFairyTales（読み替えのリスト）は、そのつど利用者に聞いてから commit する
+- **公開の枠**：本編は**月・金 19:00**、**水曜 19:00 は時事の新作の枠**（2026-11-04 利用者）。ショートは本編の翌日 12:00（再生リストに入れない）。いつでもよい回は月・金の予定の最後に足し、時事の回は空いている直近の水曜に入れる。毎年ある行事は YouTube の題名に年を付ける。予定と経緯は [docs/YOUTUBE.md](docs/YOUTUBE.md)、日付は KEYWORDS.md の表
+- **YouTube Studio の操作は Sonnet に任せる**（2026-11-04 利用者「YotubeStudioの操作は、Sonnetで」）。Agent ツール（model: sonnet）に、やることの一覧（`build/work/` の JSON。1 件ごとの done のフラグ付き）と、操作のこつ（docs/YOUTUBE.md、`docs/briefs/studio.md` のひな形）を渡す。1 回に頼むのは本編なら 10 本くらいまで（多いと途中で止まる）。結果は一覧と Studio で確かめてから KEYWORDS.md を `tools/set_date.py`・`tools/set_short.py` で直す。動画ファイルは 10MB を超えるので、アップロードの画面でファイルを選ぶのは利用者
+- **ショートの関連動画**は、予定のタスク `shorts-related-video`（月・火・木・金 13:00。ほのぼの漫才劇場・毒入り童話・BlackFairyTales 英語の 3 チャンネル）が本編の公開後に付ける。中身の写しは [docs/scheduled/shorts-related-video.md](docs/scheduled/shorts-related-video.md)（直したら写しも直す）
 
 ## 構成
 
@@ -31,7 +39,9 @@ proto/render.py      台本 1 本を決まった形の動画に（口パク・�
 art/gen_chars.py     舞台とキャラの絵（SVG）→ PNG と動画用の部品（袖の幕は前に重ねる部品も）
 assets/fonts         題名の字（Zen Maru Gothic・OFL。BlackFairyTales と同じ）
 KEYWORDS.md          題材に使えるキーワードの一覧
-build/               出力
+tools/               KEYWORDS.md の表を直す道具（set_date・set_short・tick・number_keywords）、ショートの説明文の下書き（mk_short）、説明文を読む（yt）、まとめて書き出す（render_batch）
+docs/scheduled/      予定のタスクの中身の写し（PC を移ったら作り直す）
+build/               出力（git の外。ただし各回の説明文 build/<番号>_<名前>/youtube.txt・youtube_short.txt だけは git に入れる）
 ```
 
 ```bash
@@ -39,4 +49,6 @@ python art/gen_chars.py                # 絵と部品（絵を変えたときだ
 python proto/synth.py scripts/<番号>_<名前>.txt --backend voicevox      # 声とタイムライン
 python proto/synth.py scripts/<番号>_<名前>_end.txt --backend voicevox  # その回のエンディングの声
 python proto/render.py <番号>_<名前>   # 動画（build/anim/<番号>_<名前>.mp4）
+python tools/render_batch.py <番号>_<名前> ... -j 2   # 動画・ショート・サムネイルをまとめて
+python tools/set_date.py <番号> <YYYY/MM/DD>          # KEYWORDS.md の予約日（ショートは tools/set_short.py、動画の○は tools/tick.py）
 ```
