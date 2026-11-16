@@ -5,7 +5,7 @@
     python proto/synth.py proto/hacker.txt --backend voicevox # VOICEVOX（アプリを起動しておく。声は voices.json の voicevox）
 
 できるもの：build/<名前>/<名前>_<backend>.mp3（と .wav）、timeline.txt（何秒に誰が何を言うか）
-キーは BlackFairyTales の .env の GOOGLE_TTS_API_KEY を借りる（試作のあいだだけ）。
+キーは ~/Documents/個人用/アプリのKey/Movie/.env の GOOGLE_TTS_API_KEY（動画 3 つで共通）。
 """
 import argparse
 import array
@@ -27,7 +27,7 @@ CACHE = ROOT / "build" / "cache" / "tts"
 RATE = 24000
 FPS = 30  # 動画のコマ数（口パクのタイムラインもこの刻み）
 BFT = Path("Z:/git/Movie/BlackFairyTales")  # 先に作った童話の動画。読み間違いのリストと数え方の読みを共有する
-ENV_FILES = [ROOT / ".env", BFT / ".env"]
+ENV_FILES = [Path.home() / "Documents" / "個人用" / "アプリのKey" / "Movie" / ".env", ROOT / ".env", BFT / ".env"]  # キーは PC を替えても残る「アプリのKey」に置く
 GEMINI_MODEL = "gemini-2.5-pro-tts"
 
 LINE_RE = re.compile(r"^(ALL|AB|CD|A|B|C|D)(!{1,3})?(?:\(([-+]?\d+(?:\.\d+)?)\))?:\s*(.+)$")

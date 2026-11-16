@@ -14,11 +14,11 @@
 | 予定のタスクの中身 | `docs/scheduled/`（写し） | 入っている | 下の「予定のタスク」で作り直す |
 | 声・絵の部品・動画・ショート・サムネイル・コマ | `build/` | 入っていない | 作り直せる（下の「作り直し」）。まだ上げていない回の動画は、移すか作り直す |
 | Studio の作業の一覧（動画 ID など）・ログ | `build/work/` | 入っていない | なくても困らない（ID は Studio で探せる） |
-| API キー | BlackFairyTales の `.env` | 入っていない | 手で写す（下の「キー」） |
+| API キー | `アプリのKey\Movie\.env` | 入っていない | 「アプリのKey」のフォルダにあるので、PC を替えても残る（下の「キー」） |
 
 ## フォルダの場所
 
-`Z:\git\Movie\JijiManzai` と `Z:\git\Movie\BlackFairyTales` に置く（別の場所にするなら、`proto/synth.py` の `BFT` と、予定のタスクの中のパスを直す）。読み間違いの共通のリストと API キーは BlackFairyTales 側にあるので、**2 つともクローンする**。親フォルダの `Z:\git\Movie\CLAUDE.md` も要る。
+`Z:\git\Movie\JijiManzai` と `Z:\git\Movie\BlackFairyTales` に置く（別の場所にするなら、`proto/synth.py` の `BFT` と、予定のタスクの中のパスを直す）。読み間違いの共通のリストは BlackFairyTales 側にあるので、**2 つともクローンする**。親フォルダの `Z:\git\Movie\CLAUDE.md` も要る。
 
 ## 入れるもの
 
@@ -33,7 +33,7 @@
 
 ## キー
 
-- Google の音声合成（Chirp 3: HD。いまの本番は VOICEVOX なので、Google の声を作るときだけ要る）：`GOOGLE_TTS_API_KEY`。BlackFairyTales の `.env`（またはこのリポジトリの `.env`）に書く。**キーはチャット・ログ・コミットに出さない**
+- Google の音声合成（Chirp 3: HD。いまの本番は VOICEVOX なので、Google の声を作るときだけ要る）：`GOOGLE_TTS_API_KEY`。`C:\Users\tomihama\Documents\個人用\アプリのKey\Movie\.env` に書く（動画 3 つで共通。古い場所の BlackFairyTales やこのリポジトリの `.env` も読む）。**キーはチャット・ログ・コミットに出さない**
 
 ## 作り直し
 
