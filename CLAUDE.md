@@ -20,8 +20,8 @@
 
 ## 運用の決まり（利用者から言われたこと）
 
-- **commit と push は聞かずにやる**（2026-11-04 利用者「コミットのタイミングだと思うところで、コミットとプッシュを同時に」）。台本を書き終えた、予定を組み直して KEYWORDS.md・docs を直した、など 1 つの作業がまとまったら commit → `git push origin main`。声や動画を作っている途中、Studio の結果を待っている間には切らない。報告には commit の番号と新しいファイルを書く。BlackFairyTales（読み替えのリスト）は、そのつど利用者に聞いてから commit する
-- **公開の枠**：本編は**月・金 19:00**、**水曜 19:00 は時事の新作の枠**（2026-11-04 利用者）。ショートは本編の翌日 12:00（再生リストに入れない）。いつでもよい回は月・金の予定の最後に足し、時事の回は空いている直近の水曜に入れる。毎年ある行事は YouTube の題名に年を付ける。予定と経緯は [docs/YOUTUBE.md](docs/YOUTUBE.md)、日付は KEYWORDS.md の表
+- **commit と push は聞かずにやる**（2026-11-04 利用者「コミットのタイミングだと思うところで、コミットとプッシュを同時に」）。台本を書き終えた、予定を組み直して KEYWORDS.md・docs を直した、など 1 つの作業がまとまったら commit → `git push origin main`。声や動画を作っている途中、Studio の結果を待っている間には切らない。報告には commit の番号と新しいファイルを書く。**BlackFairyTales（読み替えのリスト）も、要ると思ったときに commit・push してよい**（2026-11-19 利用者「今後、コミットとプッシュはあなたが必要だと思う時に適時」）。ただし BlackFairyTales のほかのセッションの変更は混ぜない（自分が直したファイルだけ add する）
+- **公開の枠**：本編は**月・金 19:00**、**水曜 19:00 は時事の新作の枠**（2026-11-04 利用者）、**火・木 19:00 は都道府県シリーズの枠**（2026-11-19 利用者。順はランダム、再生リスト「都道府県」）。ショートは本編の翌日 12:00（再生リストに入れない）。いつでもよい回は月・金の予定の最後に足し、時事の回は空いている直近の水曜に入れる。毎年ある行事は YouTube の題名に年を付ける。予定と経緯は [docs/YOUTUBE.md](docs/YOUTUBE.md)、日付は KEYWORDS.md の表
 - **YouTube Studio の操作は Sonnet に任せる**（2026-11-04 利用者「YotubeStudioの操作は、Sonnetで」）。Agent ツール（model: sonnet）に、やることの一覧（`build/work/` の JSON。1 件ごとの done のフラグ付き）と、操作のこつ（docs/YOUTUBE.md、`docs/briefs/studio.md` のひな形）を渡す。1 回に頼むのは本編なら 10 本くらいまで（多いと途中で止まる）。結果は一覧と Studio で確かめてから KEYWORDS.md を `tools/set_date.py`・`tools/set_short.py` で直す。動画ファイルは 10MB を超えるので、アップロードの画面でファイルを選ぶのは利用者
 - **ショートの関連動画**は、予定のタスク `shorts-related-video`（月・火・木・金 13:00。ほのぼの漫才劇場・毒入り童話・BlackFairyTales 英語の 3 チャンネル）が本編の公開後に付ける。中身の写しは [docs/scheduled/shorts-related-video.md](docs/scheduled/shorts-related-video.md)（直したら写しも直す）
 
