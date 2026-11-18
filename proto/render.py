@@ -199,6 +199,37 @@ def reveal_count(text, frac):
     return len(text)
 
 
+NOBORI = {"x": 1468, "w": 124, "top": 496, "bottom": 892}   # のぼり旗の布（右の袖とツッコミのあいだ。吹き出しより下）
+
+
+def nobori(bg, text):
+    """舞台の絵に、県名を縦書きしたのぼり旗（赤い布・白い字）を描き足す。キャラはこの上に重なる（登場・退場で前を通る）。"""
+    im = bg.copy()
+    d = ImageDraw.Draw(im)
+    x0, w, top, bottom = NOBORI["x"], NOBORI["w"], NOBORI["top"], NOBORI["bottom"]
+    x1 = x0 + w
+    pole = x1 + 10
+    outline = (42, 34, 48, 255)
+    d.ellipse((pole - 46, FLOOR_Y - 10, pole + 46, FLOOR_Y + 14), fill=(0, 0, 0, 70))                     # 影
+    d.rounded_rectangle((pole - 26, FLOOR_Y - 34, pole + 26, FLOOR_Y + 2), radius=8, fill=(90, 90, 100, 255), outline=outline, width=4)  # 重り
+    d.rectangle((pole - 6, top - 30, pole + 6, FLOOR_Y - 30), fill=(150, 110, 70, 255), outline=outline, width=3)    # さお
+    d.ellipse((pole - 12, top - 46, pole + 12, top - 22), fill=(227, 179, 65, 255), outline=outline, width=3)        # さおの先
+    d.rectangle((x0 - 6, top - 12, pole + 4, top - 2), fill=(150, 110, 70, 255), outline=outline, width=3)           # 横の棒
+    d.rectangle((x0, top, x1, bottom), fill=(200, 40, 60, 255), outline=outline, width=5)                            # 布
+    d.rectangle((x0 + 10, top + 10, x1 - 10, bottom - 10), outline=(255, 236, 200, 255), width=3)                   # 内側の白い線
+    for y in range(top + 30, bottom - 10, 70):                                                                     # さおに通す輪（ち）
+        d.rounded_rectangle((x1 - 2, y, pole + 10, y + 18), radius=6, fill=(200, 40, 60, 255), outline=outline, width=3)
+    chars = list(text)
+    size = min(84, int((bottom - top - 50) / max(1, len(chars))))
+    f = ImageFont.truetype(str(FONT), size)
+    y = top + (bottom - top - size * len(chars)) / 2
+    for ch in chars:
+        l, t, r, b = f.getbbox(ch, stroke_width=6)
+        d.text((x0 + w / 2 - (l + r) / 2, y - t + (size - (b - t)) / 2), ch, font=f, fill=(255, 255, 255, 255), stroke_width=6, stroke_fill=(90, 10, 25, 255))
+        y += size
+    return im
+
+
 class Bubbles:
     """吹き出し。区切り（タイムラインの segs）ごとに、声の長さに合わせて字を少しずつ出す。"""
 
@@ -309,6 +340,8 @@ class Scene:
         self.xs = {m["who"]: m["x"] for m in self.cast}
         sp = ROOT / "build" / "art" / "sprites"
         self.bg = Image.open(sp / self.combo / "bg.png").convert("RGBA")
+        if self.tl.get("banner"):   # 都道府県シリーズ：舞台の右手前に県名ののぼり旗（台本の頭の banner:）
+            self.bg = nobori(self.bg, self.tl["banner"])
         self.curtain = Image.open(sp / self.combo / "curtain_front.png").convert("RGBA")   # 左右の幕（袖）
         self.S = {f.stem: Image.open(f).convert("RGBA") for f in (sp / self.combo).glob("*_*.png") if f.stem != "curtain_front"}
         self.impact = Image.open(sp / "impact.png").convert("RGBA")

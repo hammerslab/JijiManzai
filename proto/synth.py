@@ -85,7 +85,7 @@ def parse(path):
         if raw.startswith("combo:"):
             combo = raw.split(":", 1)[1].strip()
             continue
-        if raw.startswith(("title:", "theme:", "thumb:", "short:")):  # 題名とお題（タイトル画面）、サムネイルの文句（／で 3 案、｜で改行）、ショートの区間（秒-秒）
+        if raw.startswith(("title:", "theme:", "thumb:", "short:", "banner:")):  # 題名とお題（タイトル画面）、サムネイルの文句（／で 3 案、｜で改行）、ショートの区間（秒-秒）、舞台ののぼりの字（都道府県シリーズの県名）
             key, value = raw.split(":", 1)
             meta[key] = value.strip()
             continue
@@ -447,7 +447,7 @@ def main():
         f0 = t // hop
         mouth[speaker][f0:f0 + n] = np.maximum(mouth[speaker][f0:f0 + n], rms)
     events.update({"combo": combo, "title": meta.get("title", ""), "theme": meta.get("theme", ""),
-                   "thumb": [c.strip() for c in meta.get("thumb", "").split("／") if c.strip()], "short": meta.get("short", ""), "fps": FPS, "duration": round(total / RATE, 3), "audio": wav.name,
+                   "thumb": [c.strip() for c in meta.get("thumb", "").split("／") if c.strip()], "short": meta.get("short", ""), "banner": meta.get("banner", ""), "fps": FPS, "duration": round(total / RATE, 3), "audio": wav.name,
                    "mouth": {k: [round(float(v), 4) for v in arr] for k, arr in mouth.items()}})
     (out_dir / f"timeline_{args.backend}.json").write_text(json.dumps(events, ensure_ascii=False), encoding="utf-8")
     print("\n".join(timeline))
