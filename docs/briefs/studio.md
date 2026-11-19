@@ -19,6 +19,13 @@ YouTube Studio で、チャンネル「ほのぼの漫才劇場」（チャン�
 3. JSON は 1 件ごとに更新して保存する（ほかの件の行は書き換えない）。
 
 ## 操作のこつ（前回うまくいった方法）
+- ⚠ **Studio の Agent は 1 人ずつ（直列）で動かす**。2026-11-19 に 5 人を同時に動かしたら、つながっている 2 つの Chrome の選択とタブのグループを取り合って、権限のないほうのブラウザで「このページを表示する権限がありません」になった。担当を分けるときも、前の人が終わってから次を頼む
+- Chrome は 2 つつながっていて、片方は Lab Hammers のアカウント（Studio が「権限がありません」になる）。「Browser 1／2」の名前は呼ぶたびに入れ替わることがあるので、名前ではなく、Studio のコンテンツ画面が開けるかで選ぶ（2026-11-19 は deviceId 308095a1… のほう）
+- 編集画面の再生リストの並びは、最近使ったものが先頭に来て毎回変わる。チェックを入れる前に名前を目で確かめる
+- ショートタブの下書きは、絞り込みなしだと 0 件に見えることがある。「公開設定：ドラフト」で絞ると出る（2026-11-19、これで 8 本を見落とした）。下書きのショートは、ダイアログで入れて保存・予約するまで編集ページが開かない
+- 保存中に「次へ」「スケジュールを設定」を押すと、押した位置の入力欄（説明など）に「19:00」「12:00」が混ざる。保存が終わるのを待つ。ダイアログのボタンの位置は画面の高さで変わるので、座標で押す前にスクリーンショットで確かめる
+- ショートの題名に「#shorts」を打つとハッシュタグの候補が出て、説明の文字が題名に入ることがある。説明を先に入れてから題名を打つ
+- 一覧の JSON は 1 件ごとに id・uploaded・done を書き換える（書き換え忘れた担当がいた）
 - Claude in Chrome（mcp__claude-in-chrome__*）。ToolSearch でまとめて読み込む："select:mcp__claude-in-chrome__tabs_context_mcp,mcp__claude-in-chrome__tabs_create_mcp,mcp__claude-in-chrome__navigate,mcp__claude-in-chrome__computer,mcp__claude-in-chrome__read_page,mcp__claude-in-chrome__find,mcp__claude-in-chrome__get_page_text,mcp__claude-in-chrome__tabs_close_mcp,mcp__claude-in-chrome__list_connected_browsers,mcp__claude-in-chrome__select_browser,mcp__claude-in-chrome__file_upload,mcp__claude-in-chrome__form_input,mcp__claude-in-chrome__javascript_tool"
 - Chrome が 2 つつながっていることがある。list_connected_browsers で確かめ、「ほのぼの漫才劇場」に権限のある方を選ぶ。権限がないと出たら https://www.youtube.com/account → 右上のアバター →「アカウントを切り替える」→「ほのぼの漫才劇場」。
 - **自分用の新しいタブを 1 つ作って、その中だけで作業する**。ほかのタブには触らない・閉じない。
